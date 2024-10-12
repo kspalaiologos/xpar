@@ -1,0 +1,76 @@
+# xpar
+xpar (v0.1) - an error/erasure code system guarding data integrity.
+Licensed under the terms of GNU GPL version 3 or later - see COPYING.
+Report issues to Kamila Szewczyk <kspalaiologos@gmail.com>.
+Project homepage: https://github.com/kspalaiologos/xpar
+
+xpar in solid mode generates a slightly inflated (by about 12%) parity-guarded
+file from a given data file. Such a file can be recovered as long as no more
+than about 6.2% of the data is corrupted. xpar internally uses a (255,223)-RS
+code over an 8-bit Galois field.
+
+# Building
+
+```
+# If using a git clone (not needed for source packages), first...
+$ ./bootstrap.sh
+
+# All...
+$ ./configure
+$ make
+$ sudo make install
+```
+
+# Usage (solid mode)
+
+Encoding and decoding is done using `xpar -e` and `xpar -d`, respectively. The
+use of memory mapping can be disabled using `--no-mmap`. Verbosity can be
+controled using `-v` (more verbose) and `-q` (less verbose).
+
+Interlacing is a technique used by xpar to improve burst error resistance. The
+default is no interlacing (`-i 1`). Overview:
+
+- `-i 1` - no interlacing, 255 byte blocks, resilient to 16 burst errors.
+- `-i 2` - 2x interlacing, 65025 byte blocks, resilient to 4080 burst errors.
+- `-i 3` - 3x interlacing, 16581375 byte blocks, resilient to 1040400 burst
+  errors.
+
+Use the `-f` flag to force processing.
+
+Examples:
+
+```
+$ xpar -evi 2 archive.tar    # Create archive.tar.xpa with 2x interlacing.
+$ xpar -df archive.tar.xpa   # Recover archive.tar, overwriting it.
+```
+
+# Disclaimer
+
+The file format will change until the stable version v1.0 is reached.
+Do not use xpar for critical data, do not expect backwards or forwards
+compatibility until then.
+
+# Roadmap
+
+- Need to implement the parallel variant.
+- Need to provide automatic testing for all configurations.
+- Implement the sharded mode.
+- Write a proper readme, manpages, etc.
+- Make sure that this builds on Windows and port over the assembly code.
+- Fuzz to find segfaults.
+
+Low priority:
+- Should probably not pad to the full interlacing block size.
+- Speed up interlacing (basically rank-2 and rank-3 transposition).
+- Add assembly routines for hot spots in the program.
+
+# Thanks
+
+xpar also builds on the work of the following people:
+- Phil Karn (KA9Q) who implemented the original Reed-Solomon code.
+- Peter Cawley who explored mixed-PCMULQDQ and SSE4.2 CRC32C acceleration.
+  His technique is now used in the xpar code.
+- Marshall Lochbaum has contributed an improvement to the syndrome computation
+  logic.
+- Rich Felker who implemented a `getopt_long` stub (for musl) used in this
+  program.

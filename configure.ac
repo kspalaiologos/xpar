@@ -1,0 +1,50 @@
+m4_define([xpar_version_major], [0])
+m4_define([xpar_version_minor], [1])
+m4_define([xpar_version], [xpar_version_major.xpar_version_minor])
+
+AC_PREREQ([2.72])
+AC_INIT([xpar],[xpar_version],[https://github.com/kspalaiologos/xpar])
+AC_CONFIG_HEADERS([config.h])
+AC_COPYRIGHT([Copyright (C) 2022-2024 Kamila Szewczyk])
+AC_LANG([C])
+
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([-Wall dist-bzip2 dist-zip dist-xz color-tests foreign])
+
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+AM_PROG_AS
+AC_PROG_CC
+
+AC_CHECK_HEADERS([stdint.h getopt.h fcntl.h sys/time.h sys/stat.h io.h unistd.h windows.h])
+AC_CHECK_FUNCS([getopt_long asprintf setmode stat commit fsync mmap CreateFileMappingA])
+AC_DEFINE([XPAR_MINOR], [xpar_version_minor], [Minor version number of xpar])
+AC_DEFINE([XPAR_MAJOR], [xpar_version_major], [Major version number of xpar])
+
+AC_ARG_ENABLE([x86_64], [AS_HELP_STRING([--enable-x86_64], [Enable x86_64 platform specific code.])], [enable_x86_64=$enableval], [enable_x86_64=no])
+if test "x$enable_x86_64" = "xyes"; then
+  AC_DEFINE([XPAR_X86_64], [1], [Enable x86_64 platform specific code.])
+  AM_CONDITIONAL([XPAR_X86_64], [true])
+else
+  AM_CONDITIONAL([XPAR_X86_64], [false])
+fi
+
+extra_cflags=""
+extra_ldflags=""
+
+AC_ARG_ENABLE([native], [AS_HELP_STRING([--enable-native], [Enable native platform optimisations.])], [enable_native=$enableval], [enable_native=no])
+if test "x$enable_native" = "xyes"; then
+  extra_cflags="$extra_cflags -march=native -mtune=native"
+fi
+
+AC_ARG_ENABLE([lto], [AS_HELP_STRING([--enable-lto], [Enable link-time optimisation.])], [enable_lto=$enableval], [enable_lto=no])
+if test "x$enable_lto" = "xyes"; then
+  extra_cflags="$extra_cflags -flto"
+  extra_ldflags="$extra_ldflags -flto"
+fi
+ 
+AC_SUBST([extra_cflags])
+AC_SUBST([extra_ldflags])
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
