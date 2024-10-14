@@ -13,7 +13,7 @@ code over an 8-bit Galois field.
 
 ```
 # If using a git clone (not needed for source packages), first...
-$ ./bootstrap.sh
+$ ./bootstrap
 
 # All...
 $ ./configure

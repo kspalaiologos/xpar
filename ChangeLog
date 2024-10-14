@@ -1,0 +1,15 @@
+2024-10-14  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	add copyright headers to shell scripts, portable gitlog-to-changelog
+	/bin/sh -> /usr/bin/env sh
+
+	rename shell scripts
+	bootstrap.sh -> bootstrap
+	contrib/gitlog-to-changelog.sh -> contrib/gitlog-to-changelog
+	contrib/xpar-torture.sh -> contrib/xpar-torture
+
+	v0.1
+
+2024-10-12  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	Initial Commit

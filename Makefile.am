@@ -7,3 +7,7 @@ xpar_SOURCES += xpar-x86_64.S
 endif
 xpar_CFLAGS = @extra_cflags@
 xpar_LDFLAGS = @extra_ldflags@
+
+.PHONY: update-ChangeLog
+update-ChangeLog:
+	contrib/gitlog-to-changelog --since=1970-01-01 > ChangeLog
