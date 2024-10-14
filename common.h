@@ -26,8 +26,26 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#define COPY(dst, src, n) for (int i = 0; i < n; i++) dst = src;
+#define FATAL(msg, ...) do { \
+  fprintf(stderr, msg "\n", ##__VA_ARGS__); exit(1); \
+} while (0)
+#define FATAL_UNLESS(msg, cond, ...) do { \
+  fprintf(stderr, msg "\n", ##__VA_ARGS__); if(cond) exit(1); \
+} while (0)
+#define FATAL_PERROR(func) do { perror(func); exit(1); } while (0)
+
+#define Fi(n, ...) for (int i = 0; i < (n); i++) { __VA_ARGS__; }
+#define Fj(n, ...) for (int j = 0; j < (n); j++) { __VA_ARGS__; }
+#define Fk(n, ...) for (int k = 0; k < (n); k++) { __VA_ARGS__; }
+#define Fi0(n, s, ...) for (int i = s; i < (n); i++) { __VA_ARGS__; }
+#define Fj0(n, s, ...) for (int j = s; j < (n); j++) { __VA_ARGS__; }
+#define Fk0(n, s, ...) for (int k = s; k < (n); k++) { __VA_ARGS__; }
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 typedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32;
 typedef int8_t i8; typedef int16_t i16; typedef int32_t i32;

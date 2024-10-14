@@ -15,11 +15,22 @@
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _CRC32C_H_
-#define _CRC32C_H_
+#ifndef _JMODE_H_
+#define _JMODE_H_
 
 #include "common.h"
 
-u32 crc32c(u8 * data, sz length);
+// ============================================================================
+//  Joint mode encoding and decoding.
+// ============================================================================
+typedef struct {
+  const char * input_name, * output_name;
+  int interlacing; // 1-3 inclusive.
+  bool force, quiet, verbose, no_map;
+} joint_options_t;
+
+void jmode_gf256_gentab(u8 poly);
+void do_joint_encode(joint_options_t o);
+void do_joint_decode(joint_options_t o);
 
 #endif

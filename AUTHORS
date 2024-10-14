@@ -1,0 +1,14 @@
+Lead development:
+Kamila Szewczyk <kspalaiologos@gmail.com, kszewczyk@acm.org>
+
+Acknowledgements:
+- Marshall Lochbaum (improved syndrome calculation).
+- Peter Cawley (developed the mixed-PCMULQDQ and SSE4.2 CRC32C
+  acceleration technique used by xpar). The code in xpar is
+  based on the fast-crc32 project of Peter's, available under
+  the MIT license.
+- Phil Karn (KA9Q) originally implemented the error+erasure
+  correction codec used by xpar.
+
+Also contains verbatim code written by:
+- Rich Felker (getopt_long shim, Expat/MIT license).

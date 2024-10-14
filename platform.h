@@ -79,5 +79,7 @@ void xfclose(FILE * des);
 void xfwrite(const void * ptr, sz size, FILE * stream);
 sz xfread(void * ptr, sz size, FILE * stream);
 void * xmalloc(sz size);
+void notty(FILE * des);
+bool is_seekable(FILE * des);
 
 #endif

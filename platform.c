@@ -248,6 +248,13 @@ int getopt_long_only(int argc, char * const * argv, const char * optstring, cons
   #include <windows.h>
 #endif
 
+// Both of the functions below add a single page (4K) of 
+// padding to the end of the file. Some of the code performs
+// controlled buffer overflows by a few bytes (i.e. when
+// the total # of shards doesn't divide the size of the file
+// evenly), so we need to make sure that we don't run into
+// any issues with the last page.
+
 mmap_t xpar_map(const char * filename) {
   mmap_t mappedFile = { NULL, 0 };
 #if defined(HAVE_CREATEFILEMAPPINGA)
@@ -260,6 +267,7 @@ mmap_t xpar_map(const char * filename) {
   if (!GetFileSizeEx(fileHandle, &fileSize)) {
     CloseHandle(fileHandle); return mappedFile;
   }
+  fileSize.QuadPart += 4096;
   HANDLE fileMapping = CreateFileMappingA(
     fileHandle, NULL, PAGE_READONLY,
     fileSize.HighPart, fileSize.LowPart, NULL
@@ -282,18 +290,20 @@ mmap_t xpar_map(const char * filename) {
     close(fd); return mappedFile;
   }
   mappedFile.size = (size_t) st.st_size;
-  mappedFile.map = mmap(NULL, mappedFile.size, PROT_READ, MAP_SHARED, fd, 0);
+  mappedFile.map = mmap(NULL, mappedFile.size + 4096, PROT_READ, MAP_SHARED, fd, 0);
   if (mappedFile.map == MAP_FAILED) {
     close(fd); return mappedFile;
   }
   close(fd);
+  // Reserve a single page at the end of the allocation
+
 #endif
   return mappedFile;
 }
 
 void xpar_unmap(mmap_t * file) {
   #if defined(HAVE_MMAP)
-    if (file->map) munmap(file->map, file->size);
+    if (file->map) munmap(file->map, file->size + 4096);
   #else
     if (file->data) UnmapViewOfFile(file->data);
   #endif
@@ -314,34 +324,40 @@ void platform_init(void) {
 }
 
 #include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
 void xfclose(FILE * des) {
-  if(fflush(des)) { perror("fflush"); exit(1); }
+  if(fflush(des)) FATAL_PERROR("fflush");
 #if defined(HAVE_COMMIT)
-  if (commit(fileno(des))) { perror("commit"); exit(1); }
+  if (commit(fileno(des))) FATAL_PERROR("commit");
 #elif defined(HAVE_FSYNC)
   // EINVAL means that we tried to fsync something that can't be synced.
   if (fsync(fileno(des))) {
-    if (errno != EINVAL) {
-      perror("fsync"); exit(1);
-    }
+    if (errno != EINVAL) FATAL_PERROR("fsync");
     errno = 0;
   }
 #endif
-  if (fclose(des) == EOF) { perror("fclose"); exit(1); }
+  if (fclose(des) == EOF) FATAL_PERROR("fclose");
 }
 void xfwrite(const void * ptr, sz size, FILE * stream) {
-  if (fwrite(ptr, 1, size, stream) != size) { perror("fwrite"); exit(1); }
-  if (ferror(stream)) { perror("fwrite"); exit(1); }
+  if (fwrite(ptr, 1, size, stream) != size) FATAL_PERROR("fwrite");
+  if (ferror(stream)) FATAL_PERROR("fwrite");
 }
 sz xfread(void * ptr, sz size, FILE * stream) {
   sz n = fread(ptr, 1, size, stream);
-  if (ferror(stream)) { perror("fread"); exit(1); }
+  if (ferror(stream)) FATAL_PERROR("fread");
   return n;
 }
 void * xmalloc(sz size) {
   void * ptr = malloc(size);
-  if (!ptr) { perror("malloc"); exit(1); }
+  if (!ptr) FATAL_PERROR("malloc");
   return ptr;
+}
+void notty(FILE * des) {
+  #if defined(HAVE_ISATTY)
+  if (isatty(fileno(des)))
+    FATAL("Refusing to read/write binary data from/to a terminal.");
+  errno = 0; // isatty sets errno to weird values on some platforms.
+  #endif
+}
+bool is_seekable(FILE * des) {
+  return fseek(des, 0, SEEK_CUR) != -1;
 }

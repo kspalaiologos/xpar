@@ -85,20 +85,24 @@ static const uint32_t crc32c_table[256] = {
 };
 
 u32 crc32c_tabular(u32 crc, u8 * data, sz length) {
-  while (length--)
-    crc = crc32c_table[(crc ^ *data++) & 0xFFL] ^ (crc >> 8);
+  Fi(length, crc = crc32c_table[(crc ^ data[i]) & 0xFFL] ^ (crc >> 8));
   return crc;
 }
 
 #if defined(XPAR_X86_64)
-  #include <x86intrin.h>
   typedef u32 (*crc32c_func)(u32, u8 *, sz);
-  extern crc32c_func crc32_x86_64_choose(void);
+  extern int crc32c_x86_64_cpuflags(void);
+  extern u32 crc32c_small_x86_64_sse42(u32, u8 *, sz);
 #endif
 
 u32 crc32c(u8 * data, sz length) {
 #if defined(XPAR_X86_64)
-  return crc32_x86_64_choose()(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
+  static int cpuflags = -1;
+  if (cpuflags == -1) cpuflags = crc32c_x86_64_cpuflags();
+  if (cpuflags & 1)
+    return crc32c_small_x86_64_sse42(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
+  else
+    return crc32c_tabular(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
 #else
   return crc32c_tabular(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
 #endif

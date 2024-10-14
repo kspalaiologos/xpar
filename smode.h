@@ -15,22 +15,33 @@
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TRANS_H_
-#define _TRANS_H_
+#ifndef _SMODE_H_
+#define _SMODE_H_
 
 #include "common.h"
 
 // ============================================================================
-//  Interlacing. Due to the Singleton bound, the error-correcting capability
-//  of the (255,223)-RS code is limited to 16 errors - (N-K)/2. To increase the
-//  practical burst error correcting capability we employ interlacing. For
-//  example, if n = 255, this allows us to correct 4080 contiguous errors in
-//  a 65025 byte block.
-//
-//  These methods transpose NxN and NxNxN arrays, respectively.
+//  Shared mode encoding and decoding.
 // ============================================================================
-void trans2D(u8 * mat);
-void trans3D(u8 * mat);
+#define MAX_DATA_SHARDS 128
+#define MAX_PARITY_SHARDS 64
+#define MAX_TOTAL_SHARDS (MAX_DATA_SHARDS + MAX_PARITY_SHARDS)
+
+typedef struct {
+  const char * input_name, * output_prefix;
+  bool force, quiet, verbose, no_map;
+  u8 dshards, pshards;
+} sharded_encoding_options_t;
+
+typedef struct {
+  const char * output_file, ** input_files;
+  bool force, quiet, verbose, no_map;
+  sz n_input_shards;
+} sharded_decoding_options_t;
+
+void smode_gf256_gentab(u8 poly);
+
+void sharded_encode(sharded_encoding_options_t o);
+void sharded_decode(sharded_decoding_options_t o);
 
 #endif
-
