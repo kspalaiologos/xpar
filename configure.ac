@@ -17,7 +17,7 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 
 AC_CHECK_HEADERS([getopt.h io.h])
-AC_CHECK_FUNCS([getopt_long asprintf stat _commit _setmode isatty fsync mmap CreateFileMappingA])
+AC_CHECK_FUNCS([getopt_long asprintf strndup stat _commit _setmode isatty fsync mmap CreateFileMappingA])
 AC_DEFINE([XPAR_MINOR], [xpar_version_minor], [Minor version number of xpar])
 AC_DEFINE([XPAR_MAJOR], [xpar_version_major], [Major version number of xpar])
 

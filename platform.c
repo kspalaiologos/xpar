@@ -33,6 +33,16 @@ int asprintf(char **strp, const char *fmt, ...) {
 }
 #endif
 
+#if !defined(HAVE_STRNDUP)
+  char * strndup(const char *s, sz n) {
+    char * copy = malloc(n + 1);
+    if (!copy) return NULL;
+    memcpy(copy, s, n);
+    copy[n] = '\0';
+    return copy;
+  }
+#endif
+
 #if !defined(HAVE_GETOPT_LONG)
 /*
   Copyright 2005-2014 Rich Felker, et al.
