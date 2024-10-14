@@ -238,16 +238,24 @@ int getopt_long_only(int argc, char * const * argv, const char * optstring, cons
 }
 #endif
 
-#if defined(HAVE_MMAP) || defined(HAVE_CREATEFILEMAPPINGA)
 #if defined(HAVE_MMAP)
   #include <sys/mman.h>
   #include <sys/stat.h>
   #include <fcntl.h>
   #include <unistd.h>
-#else
+#endif
+
+#if defined(HAVE_CREATEFILEMAPPINGA)
   #include <windows.h>
 #endif
 
+#if defined(HAVE_MMAP) && defined(HAVE_CREATEFILEMAPPINGA)
+  // Bummer! Which one to choose? On Windows we will prefer the native
+  // function, and its presence clearly signifies that we are on Windows.
+  #undef HAVE_MMAP
+#endif
+
+#if defined(HAVE_MMAP) || defined(HAVE_CREATEFILEMAPPINGA)
 // Both of the functions below add a single page (4K) of 
 // padding to the end of the file. Some of the code performs
 // controlled buffer overflows by a few bytes (i.e. when
@@ -305,29 +313,29 @@ void xpar_unmap(mmap_t * file) {
   #if defined(HAVE_MMAP)
     if (file->map) munmap(file->map, file->size + 4096);
   #else
-    if (file->data) UnmapViewOfFile(file->data);
+    if (file->map) UnmapViewOfFile(file->map);
   #endif
   file->map = NULL; file->size = 0;
 }
 #endif
 
-#if defined(HAVE_SETMODE) && defined(HAVE_IO_H)
+#if defined(HAVE_IO_H)
   #include <io.h>
   #include <fcntl.h>
 #endif
 
 void platform_init(void) {
-  #if defined(HAVE_SETMODE) && defined(HAVE_IO_H)
-    setmode(STDIN_FILENO, O_BINARY);
-    setmode(STDOUT_FILENO, O_BINARY);
+  #if defined(HAVE__SETMODE)
+    _setmode(STDIN_FILENO, O_BINARY);
+    _setmode(STDOUT_FILENO, O_BINARY);
   #endif
 }
 
 #include <errno.h>
 void xfclose(FILE * des) {
   if(fflush(des)) FATAL_PERROR("fflush");
-#if defined(HAVE_COMMIT) && defined(HAVE_IO_H)
-  if (commit(fileno(des))) FATAL_PERROR("commit");
+#if defined(HAVE__COMMIT)
+  if (_commit(fileno(des))) FATAL_PERROR("commit");
 #elif defined(HAVE_FSYNC)
   // EINVAL means that we tried to fsync something that can't be synced.
   if (fsync(fileno(des))) {

@@ -29,7 +29,7 @@ Consult the man page.
 
 The file format will change until the stable version v1.0 is reached.
 Do not use xpar for critical data, do not expect backwards or forwards
-compatibility until then. Currently tested only on Zen4 x86_64 Linux.
+compatibility until then.
 
 # Development 
 
@@ -42,6 +42,7 @@ A rough outline of some development-related topics below.
 - Write a proper readme, manpages, etc.
 - Make sure that this builds on Windows and port over the assembly code.
 - Fuzz to find segfaults.
+- Apple M1-specific optimizations to CRC32.
 - 32- vs 64-bit code: determine if there's any compatibility issues.
 
 Low priority:
@@ -61,3 +62,7 @@ As it stands:
 Code style:
 - Two space indent, brace on the same line, middle pointers - `char * p;`.
 
+## Show-stoppers
+
+clang bug (msys2 packages repository ticket 4958) - makes it impossible to
+build on x86_64 Windows with clang. Only gcc is supported.

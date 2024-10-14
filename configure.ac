@@ -17,7 +17,7 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 
 AC_CHECK_HEADERS([getopt.h io.h])
-AC_CHECK_FUNCS([getopt_long asprintf setmode stat commit isatty fsync mmap CreateFileMappingA])
+AC_CHECK_FUNCS([getopt_long asprintf stat _commit _setmode isatty fsync mmap CreateFileMappingA])
 AC_DEFINE([XPAR_MINOR], [xpar_version_minor], [Minor version number of xpar])
 AC_DEFINE([XPAR_MAJOR], [xpar_version_major], [Major version number of xpar])
 
@@ -29,6 +29,7 @@ if test "x$enable_x86_64" = "xyes"; then
   AC_DEFINE([XPAR_X86_64], [1], [Enable x86_64 platform specific code.])
   AM_CONDITIONAL([XPAR_X86_64], [true])
   AX_PROG_NASM
+  AX_GCC_FUNC_ATTRIBUTE([sysv_abi])
 else
   AM_CONDITIONAL([XPAR_X86_64], [false])
 fi

@@ -90,9 +90,15 @@ u32 crc32c_tabular(u32 crc, u8 * data, sz length) {
 }
 
 #if defined(XPAR_X86_64)
+  #ifdef HAVE_FUNC_ATTRIBUTE_SYSV_ABI
+    #define EXTERNAL_ABI __attribute__((sysv_abi))
+  #else
+    #define EXTERNAL_ABI
+  #endif
+  
   typedef u32 (*crc32c_func)(u32, u8 *, sz);
-  extern int crc32c_x86_64_cpuflags(void);
-  extern u32 crc32c_small_x86_64_sse42(u32, u8 *, sz);
+  extern EXTERNAL_ABI int crc32c_x86_64_cpuflags(void);
+  extern EXTERNAL_ABI u32 crc32c_small_x86_64_sse42(u32, u8 *, sz);
 #endif
 
 u32 crc32c(u8 * data, sz length) {

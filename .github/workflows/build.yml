@@ -79,3 +79,30 @@ jobs:
       run: ./configure CC=clang
     - name: Make
       run: make all self-check
+  
+  build-windows-x86_64:
+    name: Compile (Windows x86_64)
+    needs: [ dist ]
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [ enable-x86_64, disable-x86_64 ]
+    steps:
+    - name: Download source package artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: xpar-${{ github.sha }}
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: make gcc nasm tar gzip diffutils
+    - name: Extract source package
+      run: tar --strip-components=1 -xf xpar-${{ github.sha }}.tar.gz
+    - name: Configure
+      run: ./configure CC=gcc --${{ matrix.feature }}
+    - name: Make
+      run: make all self-check

@@ -26,9 +26,6 @@
 // ============================================================================
 #if !defined(HAVE_ASPRINTF)
   int asprintf(char **strp, const char *fmt, ...);
-#else
-  #define _GNU_SOURCE
-  #include <stdio.h>
 #endif
 
 // ============================================================================

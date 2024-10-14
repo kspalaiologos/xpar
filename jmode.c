@@ -23,6 +23,13 @@
 #include <sys/stat.h>
 
 // ============================================================================
+//  Reed-Solomon code parameters (223 bytes of input, 32 bytes of parity).
+// ============================================================================
+#define K 223
+#define N 255
+#define T 32
+
+// ============================================================================
 //  Implementation of Reed-Solomon codes. Follows the BCH view. Original code
 //  was written by Phil Karn, KA9Q, in 1999. This is a modified version due to
 //  Kamila Szewczyk which exhibits significantly better performance.

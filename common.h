@@ -24,6 +24,8 @@
   #error "Here, have a nickel kid. Go buy yourself a real computer."
 #endif
 
+// This often gets us asprintf.
+#define _GNU_SOURCE
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -50,12 +52,5 @@
 typedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32;
 typedef int8_t i8; typedef int16_t i16; typedef int32_t i32;
 typedef size_t sz;
-
-// ============================================================================
-//  Reed-Solomon code parameters (223 bytes of input, 32 bytes of parity).
-// ============================================================================
-#define K 223
-#define N 255
-#define T 32
 
 #endif

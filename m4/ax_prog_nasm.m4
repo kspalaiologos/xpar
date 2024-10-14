@@ -6,10 +6,10 @@ AC_DEFUN([AX_PROG_NASM],[
 AC_CHECK_PROGS(NASM, [nasm nasmw yasm])
 test -z "$NASM" && AC_MSG_ERROR([no nasm (Netwide Assembler) found])
 
-AC_MSG_CHECKING([for object file format of host system])
-case "$host_os" in
+AC_MSG_CHECKING([for object file format of target system])
+case "$target_os" in
   cygwin* | mingw* | pw32* | interix*)
-    case "$host_cpu" in
+    case "$target_cpu" in
       x86_64 | amd64)
         objfmt='Win64-COFF'
         ;;
@@ -31,7 +31,7 @@ case "$host_os" in
     objfmt='a.out'
   ;;
   linux*)
-    case "$host_cpu" in
+    case "$target_cpu" in
       x86_64 | amd64)
         objfmt='ELF64'
         ;;
@@ -44,7 +44,7 @@ case "$host_os" in
     if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
       objfmt='BSD-a.out'
     else
-      case "$host_cpu" in
+      case "$target_cpu" in
         x86_64 | amd64)
           objfmt='ELF64'
           ;;
@@ -55,7 +55,7 @@ case "$host_os" in
     fi
   ;;
   solaris* | sunos* | sysv* | sco*)
-    case "$host_cpu" in
+    case "$target_cpu" in
       x86_64 | amd64)
         objfmt='ELF64'
         ;;
@@ -65,7 +65,7 @@ case "$host_os" in
     esac
   ;;
   darwin* | rhapsody* | nextstep* | openstep* | macos*)
-    case "$host_cpu" in
+    case "$target_cpu" in
       x86_64 | amd64)
         objfmt='Mach-O64'
         ;;
@@ -82,7 +82,7 @@ esac
 AC_MSG_RESULT([$objfmt])
 if test "$objfmt" = 'ELF ?'; then
   objfmt='ELF'
-  AC_MSG_WARN([unexpected host system. assumed that the format is $objfmt.])
+  AC_MSG_WARN([unexpected target system. assumed that the format is $objfmt.])
 fi
 
 AC_MSG_CHECKING([for object file format specifier (NAFLAGS) ])
