@@ -210,12 +210,14 @@ static int read_header(FILE * des, int force, int ifactor_override) {
   u8 out[N]; xfread(out, 5, des); xfread(out + K, N - K, des);
   return parse_header(out, force, ifactor_override);
 }
+#ifdef XPAR_ALLOW_MAPPING
 static int read_header_from_map(mmap_t map, int force, int ifactor_override) {
   if (map.size < 5 + N - K)
     FATAL("Truncated file.");
   u8 out[N]; memcpy(out, map.map, 5); memcpy(out + K, map.map + 5, N - K);
   return parse_header(out, force, ifactor_override);
 }
+#endif
 typedef struct { u32 bytes, crc; } block_hdr;
 static void write_block_header(FILE * des, block_hdr h) {
   u8 b[8]; b[0] = 'X';
