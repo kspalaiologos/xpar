@@ -10,8 +10,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Configure
       run: |
-        ./bootstrap.sh
-        ./configure
+        ./bootstrap && ./configure
     - name: Make source package
       run: make VERSION=${{ github.sha }} dist
     - name: Upload source package artifact
