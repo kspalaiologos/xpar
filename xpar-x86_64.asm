@@ -102,4 +102,7 @@ crc32c_small_x86_64_sse42:
 .done:
   retq
 
-section .note.GNU-stack noalloc noexec nowrite progbits
+; Need .GNU-stack to mark the stack as non-executable on ELF targets.
+%ifdef ELF
+  section .note.GNU-stack noalloc noexec nowrite progbits
+%endif
