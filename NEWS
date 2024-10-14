@@ -1,2 +1,9 @@
-TODO
+This file contains release notes for major and minor releases of xpar.
+For a complete list of source-level changes, consult the ChangeLog file.
 
+===============================================================================
+v0.1 (pending release)
+- Initial release.
+- Supports joint mode and sharded mode for error and erasure correction.
+- Provides platform-specific code for x86_64, which can be enabled via
+  the --enable-x86_64 configure option.

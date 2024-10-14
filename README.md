@@ -31,6 +31,10 @@ The file format will change until the stable version v1.0 is reached.
 Do not use xpar for critical data, do not expect backwards or forwards
 compatibility until then. Currently tested only on Zen4 x86_64 Linux.
 
+# Development 
+
+A rough outline of some development-related topics below.
+
 ## Roadmap
 
 - Need to implement the parallel variant.
@@ -43,4 +47,17 @@ compatibility until then. Currently tested only on Zen4 x86_64 Linux.
 Low priority:
 - Should probably not pad to the full interlacing block size.
 - Add assembly routines for hot spots in the program.
+
+## Repository management
+
+As it stands:
+- `contrib/` - holds scripts and other non-source files that are not present
+  in the distribution tarball and not supported.
+- `NEWS` - will contain the release notes for each release and needs to be
+  modified before each release.
+- `ChangeLog` - generated via `make update-ChangeLog`; intended to be
+  re-generated before each release.
+
+Code style:
+- Two space indent, brace on the same line, middle pointers - `char * p;`.
 
