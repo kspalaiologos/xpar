@@ -1,4 +1,4 @@
-EXTRA_DIST = COPYING README.md AUTHORS xpar-torture.sh
+EXTRA_DIST = README.md
 bin_PROGRAMS = xpar
 noinst_HEADERS = platform.h crc32c.h jmode.h smode.h common.h
 xpar_SOURCES = platform.c xpar.c crc32c.c jmode.c smode.c
