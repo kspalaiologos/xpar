@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - uses: ilammy/setup-nasm@v1
     - name: Configure
       run: |
         ./bootstrap && ./configure
@@ -31,6 +32,7 @@ jobs:
         feature: [ enable-x86_64, disable-x86_64 ]
     runs-on: ubuntu-latest
     steps:
+    - uses: ilammy/setup-nasm@v1
     - name: Download source package artifact
       uses: actions/download-artifact@v4
       with:
@@ -49,8 +51,9 @@ jobs:
       fail-fast: false
       matrix:
         feature: [ enable-x86_64, disable-x86_64 ]
-    runs-on: macos-latest
+    runs-on: macOS-13
     steps:
+    - uses: ilammy/setup-nasm@v1
     - name: Download source package artifact
       uses: actions/download-artifact@v4
       with:

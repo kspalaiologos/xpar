@@ -33,19 +33,15 @@ else
   AM_CONDITIONAL([XPAR_X86_64], [false])
 fi
 
-extra_cflags=""
-extra_ldflags=""
-
-# TODO: Refactor these using ax_append_compile_flags.
 AC_ARG_ENABLE([native], [AS_HELP_STRING([--enable-native], [Enable native platform optimisations.])], [enable_native=$enableval], [enable_native=no])
 if test "x$enable_native" = "xyes"; then
-  extra_cflags="$extra_cflags -march=native -mtune=native"
+  AX_APPEND_COMPILE_FLAGS([-march=native -mtune=native])
 fi
 
 AC_ARG_ENABLE([lto], [AS_HELP_STRING([--enable-lto], [Enable link-time optimisation.])], [enable_lto=$enableval], [enable_lto=no])
 if test "x$enable_lto" = "xyes"; then
-  extra_cflags="$extra_cflags -flto"
-  extra_ldflags="$extra_ldflags -flto"
+  AX_APPEND_COMPILE_FLAGS([-flto])
+  AX_APPEND_LINK_FLAGS([-flto])
 fi
  
 AC_SUBST([extra_cflags])

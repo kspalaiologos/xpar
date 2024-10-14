@@ -10,7 +10,7 @@ AC_MSG_CHECKING([for object file format of host system])
 case "$host_os" in
   cygwin* | mingw* | pw32* | interix*)
     case "$host_cpu" in
-      x86_64)
+      x86_64 | amd64)
         objfmt='Win64-COFF'
         ;;
       *)
@@ -32,7 +32,7 @@ case "$host_os" in
   ;;
   linux*)
     case "$host_cpu" in
-      x86_64)
+      x86_64 | amd64)
         objfmt='ELF64'
         ;;
       *)
@@ -56,7 +56,7 @@ case "$host_os" in
   ;;
   solaris* | sunos* | sysv* | sco*)
     case "$host_cpu" in
-      x86_64)
+      x86_64 | amd64)
         objfmt='ELF64'
         ;;
       *)
@@ -66,7 +66,7 @@ case "$host_os" in
   ;;
   darwin* | rhapsody* | nextstep* | openstep* | macos*)
     case "$host_cpu" in
-      x86_64)
+      x86_64 | amd64)
         objfmt='Mach-O64'
         ;;
       *)
