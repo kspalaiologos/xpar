@@ -102,6 +102,17 @@ crc32c_small_x86_64_sse42:
 .done:
   retq
 
+; Some *cough* compilers use leading underscores. Please them.
+; Is there a better solution?
+
+global _crc32c_x86_64_cpuflags
+global _crc32c_small_x86_64_sse42
+_crc32c_x86_64_cpuflags:
+  jmp crc32c_x86_64_cpuflags
+_crc32c_small_x86_64_sse42:
+  jmp crc32c_small_x86_64_sse42
+
+
 ; Need .GNU-stack to mark the stack as non-executable on ELF targets.
 %ifdef ELF
   section .note.GNU-stack noalloc noexec nowrite progbits

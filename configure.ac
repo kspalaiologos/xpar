@@ -29,9 +29,6 @@ if test "x$enable_x86_64" = "xyes"; then
   AC_DEFINE([XPAR_X86_64], [1], [Enable x86_64 platform specific code.])
   AM_CONDITIONAL([XPAR_X86_64], [true])
   AX_PROG_NASM
-  
-  # Some platforms append leading underscores to symbol names. We try to stop that here.
-  AX_APPEND_COMPILE_FLAGS([-fno-leading-underscore])
 else
   AM_CONDITIONAL([XPAR_X86_64], [false])
 fi
