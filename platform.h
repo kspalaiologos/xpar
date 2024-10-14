@@ -28,6 +28,10 @@
   int asprintf(char **strp, const char *fmt, ...);
 #endif
 
+#if !defined(HAVE_STRNDUP)
+  char * strndup(const char *s, sz n);
+#endif
+
 // ============================================================================
 //  Potential shim for getopt/getopt_long if not present.
 // ============================================================================
