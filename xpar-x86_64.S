@@ -15,6 +15,7 @@
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+.att_syntax
 .text
 
 .globl crc32c_x86_64_cpuflags
