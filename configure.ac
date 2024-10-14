@@ -39,6 +39,11 @@ if test "x$enable_native" = "xyes"; then
   AX_APPEND_COMPILE_FLAGS([-march=native -mtune=native])
 fi
 
+AC_ARG_ENABLE([static], [AS_HELP_STRING([--enable-static], [Enable static linking.])], [enable_static=$enableval], [enable_static=no])
+if test "x$enable_static" = "xyes"; then
+  AX_APPEND_LINK_FLAGS([-static])
+fi
+
 AC_ARG_ENABLE([lto], [AS_HELP_STRING([--enable-lto], [Enable link-time optimisation.])], [enable_lto=$enableval], [enable_lto=no])
 if test "x$enable_lto" = "xyes"; then
   AX_APPEND_COMPILE_FLAGS([-flto])

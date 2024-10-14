@@ -7,3 +7,5 @@ v0.1 (pending release)
 - Supports joint mode and sharded mode for error and erasure correction.
 - Provides platform-specific code for x86_64, which can be enabled via
   the --enable-x86_64 configure option.
+- Tested on x86_64 Linux (Ubuntu), x86_64 and aarch64 MacOS and x86_64 and
+  i686 Windows.

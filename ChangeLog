@@ -1,5 +1,45 @@
 2024-10-14  Kamila Szewczyk  <kspalaiologos@gmail.com>
 
+	CI: binaries; configure: static linking mode
+
+	CI: tentative release process preparations
+
+	move read_header_from_map into a guard block
+
+	add strndup prototype to platform.h
+
+	try switching to mingw32/mingw64
+
+	Windows support
+
+	xpar-x86_64.asm - leading underscore fix
+
+	CI: aarch64 vanilla macos target, configure: fix leading underscores
+
+	settings specific to ELF targets
+
+	configure: cleaner flag handling, set up nasm in CI runners
+
+	rewrite platform-specific assembly using nasm.
+
+	xpar-x86_64.S: .att_syntax directive
+
+	fix a lax setmode check
+	also verify the presence of MS-specific io.h
+
+	x86_64 MacOS CI
+
+	add a rudimentary self-check target
+
+	retain only README.md in EXTRA_DIST
+
+	update the actions runner
+	fix the name of the bootstrap script
+
+	fill in v0.1 notes in NEWS, add development section in README.md
+
+	Add GNU-compatible changelog.
+
 	add copyright headers to shell scripts, portable gitlog-to-changelog
 	/bin/sh -> /usr/bin/env sh
 
