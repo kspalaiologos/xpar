@@ -21,8 +21,8 @@ jobs:
     - name: Run distcheck
       run: make distcheck
 
-  build:
-    name: Compile (clang/gcc, x86_64)
+  build-ubuntu-x86_64:
+    name: Compile (Ubuntu clang/gcc, x86_64)
     needs: [ dist ]
     strategy:
       fail-fast: false
@@ -36,8 +36,28 @@ jobs:
       with:
         name: xpar-${{ github.sha }}
     - name: Extract source package
-      run: tar --strip-components=1 -xf xpar-${{ github.sha}}.tar.gz
+      run: tar --strip-components=1 -xf xpar-${{ github.sha }}.tar.gz
     - name: Configure
       run: ./configure CC=${{ matrix.compiler }} --${{ matrix.feature }}
     - name: Make
-      run: make
+      run: make all self-check
+  
+  build-macos-x86_64:
+    name: Compile (MacOS clang, x86_64)
+    needs: [ dist ]
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [ enable-x86_64, disable-x86_64 ]
+    runs-on: macos-latest
+    steps:
+    - name: Download source package artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: xpar-${{ github.sha }}
+    - name: Extract source package
+      run: tar --strip-components=1 -xf xpar-${{ github.sha }}.tar.gz
+    - name: Configure
+      run: ./configure CC=clang --${{ matrix.feature }}
+    - name: Make
+      run: make all self-check
