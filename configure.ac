@@ -7,13 +7,13 @@ AC_INIT([xpar],[xpar_version],[https://github.com/kspalaiologos/xpar])
 AC_CONFIG_HEADERS([config.h])
 AC_COPYRIGHT([Copyright (C) 2022-2024 Kamila Szewczyk])
 AC_LANG([C])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall color-tests])
 
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AM_PROG_AS
 AC_PROG_CC
 
 AC_CHECK_HEADERS([getopt.h io.h])
@@ -21,12 +21,14 @@ AC_CHECK_FUNCS([getopt_long asprintf setmode stat commit isatty fsync mmap Creat
 AC_DEFINE([XPAR_MINOR], [xpar_version_minor], [Minor version number of xpar])
 AC_DEFINE([XPAR_MAJOR], [xpar_version_major], [Major version number of xpar])
 
+AX_C_RESTRICT
 AC_CHECK_SIZEOF([size_t])
 
 AC_ARG_ENABLE([x86_64], [AS_HELP_STRING([--enable-x86_64], [Enable x86_64 platform specific code.])], [enable_x86_64=$enableval], [enable_x86_64=no])
 if test "x$enable_x86_64" = "xyes"; then
   AC_DEFINE([XPAR_X86_64], [1], [Enable x86_64 platform specific code.])
   AM_CONDITIONAL([XPAR_X86_64], [true])
+  AX_PROG_NASM
 else
   AM_CONDITIONAL([XPAR_X86_64], [false])
 fi
@@ -34,6 +36,7 @@ fi
 extra_cflags=""
 extra_ldflags=""
 
+# TODO: Refactor these using ax_append_compile_flags.
 AC_ARG_ENABLE([native], [AS_HELP_STRING([--enable-native], [Enable native platform optimisations.])], [enable_native=$enableval], [enable_native=no])
 if test "x$enable_native" = "xyes"; then
   extra_cflags="$extra_cflags -march=native -mtune=native"
