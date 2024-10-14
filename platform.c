@@ -311,13 +311,13 @@ void xpar_unmap(mmap_t * file) {
 }
 #endif
 
-#if defined(HAVE_SETMODE)
+#if defined(HAVE_SETMODE) && defined(HAVE_IO_H)
   #include <io.h>
   #include <fcntl.h>
 #endif
 
 void platform_init(void) {
-  #if defined(HAVE_SETMODE)
+  #if defined(HAVE_SETMODE) && defined(HAVE_IO_H)
     setmode(STDIN_FILENO, O_BINARY);
     setmode(STDOUT_FILENO, O_BINARY);
   #endif
@@ -326,7 +326,7 @@ void platform_init(void) {
 #include <errno.h>
 void xfclose(FILE * des) {
   if(fflush(des)) FATAL_PERROR("fflush");
-#if defined(HAVE_COMMIT)
+#if defined(HAVE_COMMIT) && defined(HAVE_IO_H)
   if (commit(fileno(des))) FATAL_PERROR("commit");
 #elif defined(HAVE_FSYNC)
   // EINVAL means that we tried to fsync something that can't be synced.
