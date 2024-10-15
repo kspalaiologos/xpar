@@ -38,14 +38,11 @@ A rough outline of some development-related topics below.
 ## Roadmap
 
 - Need to implement the parallel variant.
-- Need to provide automatic testing for all configurations.
 - Write a proper readme, manpages, etc.
-- Make sure that this builds on Windows and port over the assembly code.
-- Fuzz to find segfaults.
-- Apple M1-specific optimizations to CRC32.
 - 32- vs 64-bit code: determine if there's any compatibility issues.
 
 Low priority:
+- Speed up the joint mode encoder loop (basically a LFSR).
 - Should probably not pad to the full interlacing block size.
 - Add assembly routines for hot spots in the program.
 
@@ -61,8 +58,3 @@ As it stands:
 
 Code style:
 - Two space indent, brace on the same line, middle pointers - `char * p;`.
-
-## Show-stoppers
-
-clang bug (msys2 packages repository ticket 4958) - makes it impossible to
-build on x86_64 Windows with clang. Only gcc is supported.

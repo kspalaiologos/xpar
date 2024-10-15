@@ -15,6 +15,7 @@ AM_INIT_AUTOMAKE([-Wall color-tests])
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_PROG_CC
+AM_PROG_AS
 
 AC_CHECK_HEADERS([getopt.h io.h])
 AC_CHECK_FUNCS([getopt_long asprintf strndup stat _commit _setmode isatty fsync mmap CreateFileMappingA])
@@ -32,6 +33,14 @@ if test "x$enable_x86_64" = "xyes"; then
   AX_GCC_FUNC_ATTRIBUTE([sysv_abi])
 else
   AM_CONDITIONAL([XPAR_X86_64], [false])
+fi
+
+AC_ARG_ENABLE([aarch64], [AS_HELP_STRING([--enable-aarch64], [Enable aarch64 platform specific code.])], [enable_aarch64=$enableval], [enable_aarch64=no])
+if test "x$enable_aarch64" = "xyes"; then
+  AC_DEFINE([XPAR_AARCH64], [1], [Enable aarch64 platform specific code.])
+  AM_CONDITIONAL([XPAR_AARCH64], [true])
+else
+  AM_CONDITIONAL([XPAR_AARCH64], [false])
 fi
 
 AC_ARG_ENABLE([native], [AS_HELP_STRING([--enable-native], [Enable native platform optimisations.])], [enable_native=$enableval], [enable_native=no])

@@ -89,24 +89,34 @@ u32 crc32c_tabular(u32 crc, u8 * data, sz length) {
   return crc;
 }
 
+typedef u32 (*crc32c_func)(u32, u8 *, sz);
+
 #if defined(XPAR_X86_64)
   #ifdef HAVE_FUNC_ATTRIBUTE_SYSV_ABI
     #define EXTERNAL_ABI __attribute__((sysv_abi))
   #else
     #define EXTERNAL_ABI
   #endif
-  
-  typedef u32 (*crc32c_func)(u32, u8 *, sz);
+
   extern EXTERNAL_ABI int crc32c_x86_64_cpuflags(void);
   extern EXTERNAL_ABI u32 crc32c_small_x86_64_sse42(u32, u8 *, sz);
+#elif defined(XPAR_AARCH64)
+  extern int crc32c_aarch64_cpuflags(void);
+  extern u32 crc32c_small_aarch64_neon(u32, u8 *, sz);
 #endif
 
 u32 crc32c(u8 * data, sz length) {
-#if defined(XPAR_X86_64)
   static int cpuflags = -1;
+#if defined(XPAR_X86_64)
   if (cpuflags == -1) cpuflags = crc32c_x86_64_cpuflags();
   if (cpuflags & 1)
     return crc32c_small_x86_64_sse42(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
+  else
+    return crc32c_tabular(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
+#elif defined(XPAR_AARCH64)
+  if (cpuflags == -1) cpuflags = crc32c_aarch64_cpuflags();
+  if (cpuflags)
+    return crc32c_small_aarch64_neon(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
   else
     return crc32c_tabular(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
 #else

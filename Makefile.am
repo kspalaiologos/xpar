@@ -10,6 +10,10 @@ SUFFIXES = .asm
 	$(NASM) $(NAFLAGS) -o $@ $<
 endif
 
+if XPAR_AARCH64
+xpar_SOURCES += xpar-aarch64.S
+endif
+
 # Developer convenience targets
 .PHONY: update-ChangeLog
 update-ChangeLog:

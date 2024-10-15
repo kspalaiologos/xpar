@@ -68,6 +68,10 @@ jobs:
     name: Compile (MacOS clang, aarch64)
     needs: [ dist ]
     runs-on: macOS-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [ enable-aarch64, disable-aarch64 ]
     steps:
     - name: Download source package artifact
       uses: actions/download-artifact@v4
@@ -76,7 +80,7 @@ jobs:
     - name: Extract source package
       run: tar --strip-components=1 -xf xpar-${{ github.sha }}.tar.gz
     - name: Configure
-      run: ./configure CC=clang
+      run: ./configure CC=clang --${{ matrix.feature }}
     - name: Make
       run: make all self-check
   
