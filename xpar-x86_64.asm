@@ -21,7 +21,7 @@ section .text
   global _rse32_x86_64_generic
   global _rse32_x86_64_avx512
   extern _PROD_GEN
-  
+
   %define xpar_x86_64_cpuflags _xpar_x86_64_cpuflags
   %define crc32c_small_x86_64_sse42 _crc32c_small_x86_64_sse42
   %define rse32_x86_64_generic _rse32_x86_64_generic
@@ -212,8 +212,64 @@ rse32_x86_64_generic:
   rep movsb
   ret
 
+; Same thing as above, but AVX gives us some interesting instructions that
+; simplify working with the shift register pattern. My old version here used
+; blends and permutes (and hence was marginally faster), but I found a better
+; way.
+rse32_shuf_mask:
+  db 1, 0, 2, 4, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0
 rse32_x86_64_avx512:
-  jmp rse32_x86_64_generic
+  vxorps xmm0, xmm0, xmm0
+  vmovups [rsi + K], ymm0
+  movzx ecx, byte [rsi + K + T - 1]
+  movzx eax, byte [rsi + K + T - 2]
+  movzx edx, byte [rsi + K + T - 3]
+  movzx r10d, byte [rsi + K + T - 4]
+  vmovd xmm3, dword [rsi + K + T - 8]
+  vmovq xmm2, qword [rsi + K + T - 16]
+  vmovupd xmm1, [rsi + K]
+  mov r8d, K
+  lea r9, [rel PROD_GEN]
+  vmovd xmm0, dword [rel rse32_shuf_mask]
+.rse32_K_loop:
+  xor cl, byte [rdi + r8 - 1]
+  movzx r11d, cl
+  shl r11d, 5
+  mov ecx, eax
+  xor cl, byte [r11 + r9 + T - 1]
+  mov byte [rsi + K + T - 1], cl
+  mov eax, edx
+  xor al, byte [r11 + r9 + T - 2]
+  mov byte [rsi + K + T - 2], al
+  mov edx, r10d
+  xor dl, byte [r11 + r9 + T - 3]
+  mov byte [rsi + K + T - 3], dl
+  vmovd xmm4, dword [r11 + r9 + T - 7]
+  vpxor xmm4, xmm4, xmm3
+  vmovd dword [rsi + K + T - 7], xmm4
+  vmovq xmm3, qword [r11 + r9 + T - 15]
+  vpxor xmm3, xmm3, xmm2
+  vmovq qword [rsi + K + T - 15], xmm3
+  vxorpd xmm2, xmm1, [r11 + r9 + 1]
+  vmovupd [rsi + K + 1], xmm2
+  mov r10d, dword [r11 + r9]
+  mov byte [rsi + K], r10b
+  vpslldq xmm1, xmm2, 1
+  vpinsrb xmm1, xmm1, r10d, 0
+  vpalignr xmm2, xmm3, xmm2, 15
+  vpsrlq xmm3, xmm3, 56
+  vpunpcklbw xmm3, xmm4, xmm3
+  vpshufb xmm3, xmm3, xmm0
+  vpextrb r10d, xmm4, 3
+  dec r8
+  jne .rse32_K_loop
+  mov ecx, K
+  xchg rdi, rsi
+  rep movsb
+  vzeroupper ; <-- If you remove this because you don't understand what it
+  ret        ;     does, I will find you, and it will not end well for you.
+; Unlike some people say, this is still necessary on AVX512 CPUs.
 
 ; Need .GNU-stack to mark the stack as non-executable on ELF targets.
 %ifdef ELF
