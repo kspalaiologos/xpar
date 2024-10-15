@@ -14,6 +14,8 @@ if XPAR_AARCH64
 xpar_SOURCES += xpar-aarch64.S
 endif
 
+dist_man_MANS = xpar.1
+
 # Developer convenience targets
 .PHONY: update-ChangeLog
 update-ChangeLog:

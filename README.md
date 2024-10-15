@@ -4,7 +4,7 @@ Licensed under the terms of GNU GPL version 3 or later - see COPYING.
 Report issues to Kamila Szewczyk <kspalaiologos@gmail.com>.
 Project homepage: https://github.com/kspalaiologos/xpar
 
-xpar in solid mode generates a slightly inflated (by about 12%) parity-guarded
+xpar in joint mode generates a slightly inflated (by about 12%) parity-guarded
 file from a given data file. Such a file can be recovered as long as no more
 than about 6.2% of the data is corrupted. xpar internally uses a (255,223)-RS
 code over an 8-bit Galois field.

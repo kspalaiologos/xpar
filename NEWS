@@ -2,7 +2,13 @@ This file contains release notes for major and minor releases of xpar.
 For a complete list of source-level changes, consult the ChangeLog file.
 
 ===============================================================================
-v0.1 (pending release)
+v0.2 (15-10-2024)
+- Provides a manual page for the xpar command.
+- Provides platform-specific code for aarch64, which can be enabled via
+  the --enable-aarch64 configure option.
+
+===============================================================================
+v0.1 (14-10-2024)
 - Initial release.
 - Supports joint mode and sharded mode for error and erasure correction.
 - Provides platform-specific code for x86_64, which can be enabled via

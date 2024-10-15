@@ -1,8 +1,11 @@
+2024-10-15  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	aarch64-machine-specific code
+
 2024-10-14  Kamila Szewczyk  <kspalaiologos@gmail.com>
 
-	CI: binaries; configure: static linking mode
-
-	CI: tentative release process preparations
+	v0.1 release
+	update AUTHORS
 
 	move read_header_from_map into a guard block
 
