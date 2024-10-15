@@ -12,6 +12,7 @@ endif
 
 if XPAR_AARCH64
 xpar_SOURCES += xpar-aarch64.S
+xpar_CCASFLAGS = -march=armv8-a+crypto+crc
 endif
 
 dist_man_MANS = xpar.1

@@ -16,7 +16,7 @@
 .extern getauxval
 
 #if defined(__APPLE__)
-; aarch64 MacOS
+/* aarch64 MacOS */
 .extern _sysctlbyname
 .globl _crc32c_aarch64_cpuflags
 _crc32c_aarch64_cpuflags:
@@ -42,12 +42,12 @@ _crc32c_aarch64_cpuflags:
   ret
 .name: .asciz "hw.optional.armv8_crc32"
 #else
-; aarch64 Linux
+/* aarch64 Linux */
 .extern getauxval
 .globl crc32c_aarch64_cpuflags
 crc32c_aarch64_cpuflags:
   stp x29, x30, [sp, -16]!
-  mov x0, 16 ; AT_HWCAP
+  mov x0, 16 /* AT_HWCAP */
   mov x29, sp
   bl getauxval
   ldp x29, x30, [sp], 16
