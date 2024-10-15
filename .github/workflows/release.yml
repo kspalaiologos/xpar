@@ -21,6 +21,7 @@ jobs:
           sudo apt install bzip3 -y
       - name: Build source packages
         run: |
+          make update-ChangeLog
           make dist-gzip
           make dist-zip
           gzip -dk xpar-${{ github.ref_name }}.tar.gz
