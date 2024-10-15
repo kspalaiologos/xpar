@@ -38,9 +38,7 @@ A rough outline of some development-related topics below.
 ## Roadmap
 
 - Need to implement the parallel variant.
-- Speed up the joint mode encoder loop (basically a LFSR).
 - Should probably not pad to the full interlacing block size.
-- Add assembly routines for hot spots in the program.
 
 ## Repository management
 
