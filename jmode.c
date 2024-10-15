@@ -34,7 +34,8 @@
 //  was written by Phil Karn, KA9Q, in 1999. This is a modified version due to
 //  Kamila Szewczyk which exhibits significantly better performance.
 // ============================================================================
-static u8 LOG[256], EXP[256], PROD[256][256], PROD_GEN[256][32], DP[256][256];
+static u8 LOG[256], EXP[256], PROD[256][256], DP[256][256];
+u8 PROD_GEN[256][32];
 void jmode_gf256_gentab(u8 poly) {
   for (int l = 0, b = 1; l < 255; l++) {
     LOG[b] = l;  EXP[l] = b;
@@ -59,6 +60,23 @@ static u8 gf256_div(u8 a, u8 b) {
   int d = LOG[a] - LOG[b];
   return EXP[d < 0 ? d + 255 : d];
 }
+#if defined(XPAR_X86_64)
+#ifdef HAVE_FUNC_ATTRIBUTE_SYSV_ABI
+  #define EXTERNAL_ABI __attribute__((sysv_abi))
+#else
+  #define EXTERNAL_ABI
+#endif
+
+extern EXTERNAL_ABI int xpar_x86_64_cpuflags(void);
+extern EXTERNAL_ABI void rse32_x86_64_avx512(u8 data[K], u8 out[N]);
+extern EXTERNAL_ABI void rse32_x86_64_generic(u8 data[K], u8 out[N]);
+void rse32(u8 data[K], u8 out[N]) {
+  static int cpuflags = -1;
+  if (cpuflags == -1) cpuflags = xpar_x86_64_cpuflags();
+  if (cpuflags & 0xC) rse32_x86_64_avx512(data, out);
+  else rse32_x86_64_generic(data, out);
+}
+#else
 void rse32(u8 data[K], u8 out[N]) {
   memset(out + K, 0, N - K);
   for (int i = K - 1; i >= 0; i--) {
@@ -69,6 +87,7 @@ void rse32(u8 data[K], u8 out[N]) {
   }
   memcpy(out, data, K);
 }
+#endif
 int rsd32(u8 data[N]) {
   int deg_lambda, el, deg_omega = 0;
   int i, j, r, k, syn_error, count;

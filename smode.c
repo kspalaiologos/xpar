@@ -279,7 +279,7 @@ typedef struct {
   sz shard_size, total_size;
 } sharded_hv_result_t;
 static sharded_hv_result_t validate_shard_header(bool may_map,
-    const char * file_name) {
+    const char * file_name, sharded_decoding_options_t opt) {
   sharded_hv_result_t res;  memset(&res, 0, sizeof(res));
   if (may_map) {
     #if defined(XPAR_ALLOW_MAPPING)
@@ -298,6 +298,15 @@ static sharded_hv_result_t validate_shard_header(bool may_map,
       res.shard_number = map.map[10];
       for (int i = 0; i < 8; i++)
         res.total_size |= map.map[11 + i] << (56 - 8 * i);
+      if (SIZEOF_SIZE_T == 4) {
+        if (map.map[11] || map.map[12] || map.map[13] || map.map[14]) {
+          if(!opt.quiet)
+            fprintf(stderr,
+              "Shard `%s' has a total size that is too large for 32-bit architectures.\n",
+              file_name);
+          xpar_unmap(&map);  return res;
+        }
+      }
       res.shard_size = map.size - SHARD_HEADER_SIZE;
       // Check the CRC.
       u32 crc = crc32c(map.map + SHARD_HEADER_SIZE, res.shard_size);
@@ -331,8 +340,16 @@ static sharded_hv_result_t validate_shard_header(bool may_map,
   res.shard_number = buffer[10];
   for (int i = 0; i < 8; i++)
     res.total_size |= buffer[11 + i] << (56 - 8 * i);
+  if (SIZEOF_SIZE_T == 4) {
+    if (buffer[11] || buffer[12] || buffer[13] || buffer[14]) {
+      if(!opt.quiet)
+        fprintf(stderr,
+          "Shard `%s' has a total size that is too large for 32-bit architectures.\n",
+          file_name);
+      free(buffer);  return res;
+    }
+  }
   res.shard_size = size - SHARD_HEADER_SIZE;
-  // Check the CRC.
   u32 crc = crc32c(buffer + SHARD_HEADER_SIZE, res.shard_size);
   if (crc != res.crc) {
     free(buffer);  return res;
@@ -363,7 +380,6 @@ static u8 * most_frequent(u8 * tab, sz nmemb, sz size) {
   return best;
 }
 void sharded_decode(sharded_decoding_options_t opt) {
-  // Check each of the files. Validate the header, compute the CRCs.
   sharded_hv_result_t res[MAX_TOTAL_SHARDS];
   if (opt.n_input_shards > MAX_TOTAL_SHARDS)
     FATAL(
@@ -372,7 +388,7 @@ void sharded_decode(sharded_decoding_options_t opt) {
       "yet. Please throw away some of the input shards and try again.\n"
     );
   Fi(opt.n_input_shards,
-    res[i] = validate_shard_header(opt.no_map, opt.input_files[i]);
+    res[i] = validate_shard_header(opt.no_map, opt.input_files[i], opt);
     if (!res[i].valid) {
       if (!opt.quiet)
         fprintf(stderr,

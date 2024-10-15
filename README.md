@@ -38,7 +38,6 @@ A rough outline of some development-related topics below.
 ## Roadmap
 
 - Need to implement the parallel variant.
-- 32- vs 64-bit code: determine if there's any compatibility issues.
 - Speed up the joint mode encoder loop (basically a LFSR).
 - Should probably not pad to the full interlacing block size.
 - Add assembly routines for hot spots in the program.

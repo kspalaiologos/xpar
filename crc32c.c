@@ -98,7 +98,7 @@ typedef u32 (*crc32c_func)(u32, u8 *, sz);
     #define EXTERNAL_ABI
   #endif
 
-  extern EXTERNAL_ABI int crc32c_x86_64_cpuflags(void);
+  extern EXTERNAL_ABI int xpar_x86_64_cpuflags(void);
   extern EXTERNAL_ABI u32 crc32c_small_x86_64_sse42(u32, u8 *, sz);
 #elif defined(XPAR_AARCH64)
   extern int crc32c_aarch64_cpuflags(void);
@@ -108,7 +108,7 @@ typedef u32 (*crc32c_func)(u32, u8 *, sz);
 u32 crc32c(u8 * data, sz length) {
   static int cpuflags = -1;
 #if defined(XPAR_X86_64)
-  if (cpuflags == -1) cpuflags = crc32c_x86_64_cpuflags();
+  if (cpuflags == -1) cpuflags = xpar_x86_64_cpuflags();
   if (cpuflags & 1)
     return crc32c_small_x86_64_sse42(0xFFFFFFFFL, data, length) ^ 0xFFFFFFFFL;
   else
