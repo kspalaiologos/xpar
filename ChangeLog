@@ -1,5 +1,31 @@
 2024-10-16  Kamila Szewczyk  <kspalaiologos@gmail.com>
 
+	TODO: update tasks.
+
+	mention interlacing parallelism
+
+	-j
+
+	parallel decode
+
+	CI: Stop providing Linux binaries.
+
+	CI: Install OMP
+
+	speed up interlacing modes -i2 -i3 with OpenMP
+
+	fix overflowing shifts
+
+	xpar-x86_64: missing align
+
+	fix off-by-1 in asm code
+
+	xpar-x86_64.asm: clean up the source, add 3-way saturating CRC32C.
+
+	smode: restrict on vector-scalar product
+
+	v0.3
+
 	to-do: strike down some performance-related goals
 
 	avx512 version in xpar-x86_64.asm

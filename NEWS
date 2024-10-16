@@ -2,6 +2,16 @@ This file contains release notes for major and minor releases of xpar.
 For a complete list of source-level changes, consult the ChangeLog file.
 
 ===============================================================================
+v0.4 (16-10-2024)
+- x86_64 static Linux binaries are no longer provided.
+- OpenMP support has been added to improve encoding and decoding performance
+  in joint mode with high interlacing factors on multi-core machines.
+- 3-way saturating CRC32C implementation has been added to improve performance
+  on x86_64 machines that support SSE4.2.
+- Slightly improve the performance of the sharded mode.
+- Fix undefined behaviour in sharded mode regarding int shifts.
+
+===============================================================================
 v0.3 (16-10-2024)
 - Improve joint encoding performance on x86_64 machines.
 - Support aarch64 Linux.
