@@ -15,11 +15,15 @@
 
 section .text
 
+; =============================================================================
+;  MacOS likes leading underscores in symbol names. Please it.
+; =============================================================================
 %ifdef MACHO
   global _xpar_x86_64_cpuflags
   global _crc32c_small_x86_64_sse42
   global _rse32_x86_64_generic
   global _rse32_x86_64_avx512
+  global _crc32c_32k_x86_64_sse42
   extern _PROD_GEN
 
   %define xpar_x86_64_cpuflags _xpar_x86_64_cpuflags
@@ -27,32 +31,37 @@ section .text
   %define rse32_x86_64_generic _rse32_x86_64_generic
   %define rse32_x86_64_avx512 _rse32_x86_64_avx512
   %define PROD_GEN _PROD_GEN
+  %define crc32c_32k_x86_64_sse42 _crc32c_32k_x86_64_sse42
 %else
   global xpar_x86_64_cpuflags
   global crc32c_small_x86_64_sse42
   global rse32_x86_64_generic
   global rse32_x86_64_avx512
+  global crc32c_32k_x86_64_sse42
   extern PROD_GEN
 %endif
 
-; The case for this file is very simple: tabular CRC32 is a horrible
-; use of the CPU. It causes a lot of cache thrashing and is generally
-; somewhat slow. Profiling shows that on the author's CPU,
-; AMD Ryzen 7 PRO 7840U, the runtime share of CRC32 goes down from about
-; 15% to about 0.5% with this simple implementation.
+; =============================================================================
+;  The case for this file is very simple: tabular CRC32 is a horrible
+;  use of the CPU. It causes a lot of cache thrashing and is generally
+;  somewhat slow. Profiling shows that on the author's CPU,
+;  AMD Ryzen 7 PRO 7840U, the runtime share of CRC32 goes down from about
+;  15% to about 0.5% with this simple implementation.
+;  Notice that there are better ways to do CRC32 by saturating the
+;  CPU's execution units. On most architectures, the latency of CRC32 is 3,
+;  while the throughput is 1. This means that you can do 3 CRC32s in parallel.
+;  This is also done in this unit, see below. Another improvement
+;  stems from the use of the PCLMULQDQ instruction, which can be used to
+;  calculate CRC32 in parallel with the dedicated instruction, further
+;  increasing throughput to about 70-80GiB/s.
+; =============================================================================
 
-; Notice that there are better ways to do CRC32 by saturating the
-; CPU's execution units. On most architectures, the latency of CRC32 is 3,
-; while the throughput is 1. This means that you can do 3 CRC32s in parallel.
-; This is not done here (yet), but it is rather easy to do. Another improvement
-; stems from the use of the PCLMULQDQ instruction, which can be used to
-; calculate CRC32 in parallel with the dedicated instruction, further
-; increasing throughput to about 70-80GiB/s.
-
-; Probe the CPU features, keeping in mind that the OS can disable
-; AVX512F and AVX512VL support. The return value is a bitfield:
-; rax & (1 << 0) - SSE4.2 support.    rax & (1 << 1) - PCLMULQDQ support.
-; rax & (1 << 2) - AVX512F support.   rax & (1 << 3) - AVX512VL support.
+; =============================================================================
+;  Probe the CPU features, keeping in mind that the OS can disable
+;  AVX512F and AVX512VL support. The return value is a bitfield:
+;  rax & (1 << 0) - SSE4.2 support.    rax & (1 << 1) - PCLMULQDQ support.
+;  rax & (1 << 2) - AVX512F support.   rax & (1 << 3) - AVX512VL support.
+; =============================================================================
 xpar_x86_64_cpuflags:
   push rbx
   mov eax, 1
@@ -86,7 +95,9 @@ xpar_x86_64_cpuflags:
   pop rbx
   ret
 
-; A simple SSE4.2 implementation particularly suited for small buffers.
+; =============================================================================
+;  A simple SSE4.2 implementation particularly suited for small buffers.
+; =============================================================================
 crc32c_small_x86_64_sse42:
   mov eax, edi
   cmp rdx, 8
@@ -134,15 +145,121 @@ crc32c_small_x86_64_sse42:
 .done:
   retq
 
-; Reed-Solomon encoder is basically a shift register. Here, we observe
-; that compilers are generally very bad at optimising this kind of pattern.
-; This is however excusable, as the x86_64 instruction set does not
-; accommodate it very well. Below we use a somewhat cheap trick with storing
-; the 32-byte circular buffers in XMM registers (128-bit wide each).
-; Then we can use pslldq/psrldq to shift the data (like in a shift register).
-; and make room for the new data by ANDing with the mask below.
+; =============================================================================
+;  Software CLMUL, for non-PCMULQDQ CPUs. 2x unrolled.
+; =============================================================================
+clmul:
+  mov edx, esi
+  xor ecx, ecx
+  xor eax, eax
+.clmul_loop:
+  ; General formula: res ^= (a & (1 << cl)) * b;
+  mov esi, 1
+  shl esi, cl
+  and esi, edi
+  imul rsi, rdx
+  xor rsi, rax
+  mov eax, 2
+  shl eax, cl
+  and eax, edi
+  imul rax, rdx
+  xor rax, rsi
+  add ecx, 2
+  cmp ecx, 32
+  jne .clmul_loop
+  ret
 
-; A version that works on all x86_64 machines.
+; =============================================================================
+;  3-way saturating CRC32C implementation. Works in blocks of 32K. Defers to
+;  `crc32c_small_x86_64_sse42' for leftover.
+; =============================================================================
+BLK32k equ 32000
+crc32c_32k_x86_64_sse42:
+  push r15
+  push r14
+  push r13
+  push r12
+  push rbx
+  mov r14, rdx
+  mov rbx, rsi
+  test rdx, rdx
+  sete al
+  test bl, 7
+  sete cl
+  or cl, al
+  jne .crc32c_32k_check_size
+  lea rax, [rbx + 1]
+.crc32c_32k_byte_align:
+  crc32 edi, byte [rbx]
+  mov rcx, r14
+  inc rbx
+  dec r14
+  cmp rcx, 1
+  je .crc32c_32k_check_size
+  mov ecx, eax
+  and ecx, 7
+  inc rax
+  test rcx, rcx
+  jne .crc32c_32k_byte_align
+.crc32c_32k_check_size:
+  cmp r14, BLK32k
+  jae .crc32c_32k_enter_loop
+  mov r15d, edi
+.crc32c_32k_done:
+  mov edi, r15d
+  mov rsi, rbx
+  mov rdx, r14
+  pop rbx
+  pop r12
+  pop r13
+  pop r14
+  pop r15
+  jmp crc32c_small_x86_64_sse42
+.crc32c_32k_combine:
+  mov esi, 0xABAEB715
+  call clmul
+  mov r13, rax
+  mov edi, r12d
+  mov esi, 0x10B2EE53
+  call clmul
+  xor rax, r13
+  xor rax, qword [rbx + BLK32k - 8]
+  crc32 r15, rax
+  add rbx, BLK32k
+  sub r14, BLK32k
+  mov edi, r15d
+  cmp r14, BLK32k - 1
+  jbe .crc32c_32k_done
+.crc32c_32k_enter_loop:
+  xor eax, eax
+  xor r12d, r12d
+  xor r15d, r15d
+.crc32c_32k_2x3way_qword_loop:
+  mov edi, edi
+  crc32 rdi, qword [rbx + 8 * rax]
+  crc32 r12, qword [rbx + 8 * rax + (BLK32k - 8) / 3]
+  crc32 r15, qword [rbx + 8 * rax + 2 * (BLK32k - 8) / 3]
+  cmp eax, BLK32k / 24
+  je .crc32c_32k_combine
+  crc32 rdi, qword [rbx + 8 * rax + 8]
+  crc32 r12, qword [rbx + 8 * rax + (BLK32k - 8) / 3 + 8]
+  crc32 r15, qword [rbx + 8 * rax + 2 * (BLK32k - 8) / 3 + 8]
+  add rax, 2
+  jmp .crc32c_32k_2x3way_qword_loop
+
+;  TO-DO: 3-way saturating CRC32C + concurrent PCMULQDQ fusion
+;         implementation for 2MB blocks based on Peter Cawley's ideas.
+
+; =============================================================================
+;  Reed-Solomon encoder is basically a shift register. Here, we observe
+;  that compilers are generally very bad at optimising this kind of pattern.
+;  This is however excusable, as the x86_64 instruction set does not
+;  accommodate it very well. Below we use a somewhat cheap trick with storing
+;  the 32-byte circular buffers in XMM registers (128-bit wide each).
+;  Then we can use pslldq/psrldq to shift the data (like in a shift register).
+;  and make room for the new data by ANDing with the mask below.
+;  A version that works on all x86_64 machines.
+; =============================================================================
 rse32_wipe_mask:
   db 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
   db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -212,10 +329,12 @@ rse32_x86_64_generic:
   rep movsb
   ret
 
-; Same thing as above, but AVX gives us some interesting instructions that
-; simplify working with the shift register pattern. My old version here used
-; blends and permutes (and hence was marginally faster), but I found a better
-; way.
+; =============================================================================
+;  Same thing as above, but AVX gives us some interesting instructions that
+;  simplify working with the shift register pattern. My old version here used
+;  blends and permutes (and hence was marginally faster), but I found a better
+;  way.
+; =============================================================================
 rse32_shuf_mask:
   db 1, 0, 2, 4, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0
