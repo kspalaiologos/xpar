@@ -91,7 +91,7 @@ void rse32(u8 data[K], u8 out[N]) {
 int rsd32(u8 data[N]) {
   int deg_lambda, el, deg_omega = 0;
   int i, j, r, k, syn_error, count;
-  u8 q, tmp, num1, num2, den, discr_r;
+  u8 q, tmp, num1, den, discr_r;
   u8 lambda[T + 1] = { 0 }, omega[T + 1] = { 0 }, eras_pos[T] = { 0 };
   u8 t[T + 1], s[T], root[T], reg[T + 1] = { 0 };
   u8 b_backing[3 * T + 1] = { 0 }, * b = b_backing + 2 * T;

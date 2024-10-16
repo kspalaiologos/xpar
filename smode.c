@@ -293,12 +293,12 @@ static sharded_hv_result_t validate_shard_header(bool may_map,
         xpar_unmap(&map);  return res;
       }
       for (int i = 0; i < 4; i++)
-        res.crc |= map.map[4 + i] << (24 - 8 * i);
+        res.crc |= ((sz) map.map[4 + i]) << (24 - 8 * i);
       res.dshards = map.map[8];
       res.pshards = map.map[9];
       res.shard_number = map.map[10];
       for (int i = 0; i < 8; i++)
-        res.total_size |= map.map[11 + i] << (56 - 8 * i);
+        res.total_size |= ((sz) map.map[11 + i]) << (56 - 8 * i);
       if (SIZEOF_SIZE_T == 4) {
         if (map.map[11] || map.map[12] || map.map[13] || map.map[14]) {
           if(!opt.quiet)
@@ -335,12 +335,12 @@ static sharded_hv_result_t validate_shard_header(bool may_map,
     free(buffer);  return res;
   }
   for (int i = 0; i < 4; i++)
-    res.crc |= buffer[4 + i] << (24 - 8 * i);
+    res.crc |= ((sz) buffer[4 + i]) << (24 - 8 * i);
   res.dshards = buffer[8];
   res.pshards = buffer[9];
   res.shard_number = buffer[10];
   for (int i = 0; i < 8; i++)
-    res.total_size |= buffer[11 + i] << (56 - 8 * i);
+    res.total_size |= ((sz) buffer[11 + i]) << (56 - 8 * i);
   if (SIZEOF_SIZE_T == 4) {
     if (buffer[11] || buffer[12] || buffer[13] || buffer[14]) {
       if(!opt.quiet)

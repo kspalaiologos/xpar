@@ -7,7 +7,7 @@ if XPAR_X86_64
 xpar_SOURCES += xpar-x86_64.asm
 SUFFIXES = .asm
 .asm.o:
-	$(NASM) $(NAFLAGS) -o $@ $<
+	$(NASM) $(NAFLAGS) -g -o $@ $<
 endif
 
 if XPAR_AARCH64
