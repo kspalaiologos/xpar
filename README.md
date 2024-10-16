@@ -37,7 +37,8 @@ A rough outline of some development-related topics below.
 
 ## Roadmap
 
-- Speed up the sharded variant via parallelism or BLAS.
+- Replace the getopt_long shim with an in-house implementation.
+- Speed up trans2D/trans3D in jmode.c
 - Should probably not pad to the full interlacing block size.
 
 ## Repository management

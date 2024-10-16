@@ -171,12 +171,6 @@ int rsd32(u8 data[N]) {
 // ============================================================================
 //  Processing. We apply a few strategies that depend on some specifics of the
 //  process at hand:
-//  - If we can map the file to memory and have multi-core capabilities, we use
-//    work-stealing parallelism to encode the data in chunks as big as the 
-//    interlacing factor.
-//    - If the output file is seekable, we pre-allocate the space and seek
-//      across the file to write whichever chunks are ready (1).
-//    - If the output file is not seekable, we write the chunks in order (2).
 //  - If we can map the file to memory but can not perform parallel encoding,
 //    we encode the data in a serial fashion (3).
 //  - If the file can not be mapped, we assume that the output also can not be
@@ -189,28 +183,20 @@ static int compute_interlacing_bs(int ifactor) {
     case 3: return N * N; break;
   }
 }
-static void trans2D(u8 * mat) {
-  Fi(N, Fj0(N, i + 1,
-    u8 temp = mat[i * N + j];
-    mat[i * N + j] = mat[j * N + i];
-    mat[j * N + i] = temp))
+static void trans2D(u8 * restrict in, u8 * restrict out) {
+  Fi(N, Fj(N, out[j * N + i] = in[i * N + j]))
 }
-static void trans3D(u8 * mat) {
+static void trans3D(u8 * restrict in, u8 * restrict out) {
 #if defined(XPAR_OPENMP)
   #pragma omp parallel for
 #endif
-  Fi(N, Fj(N, Fk0(N, i + 1,
-    int index1 = i * N * N + j * N + k;
-    int index2 = k * N * N + j * N + i;
-    u8 temp = mat[index1];
-    mat[index1] = mat[index2];
-    mat[index2] = temp;
-  )))
+  Fi(N, Fj(N, Fk(N, out[k * N * N + j * N + i] = in[i * N * N + j * N + k])))
 }
-static void do_interlacing(u8 * out_buffer, int ifactor) {
+static void do_interlacing(u8 * restrict in, u8 * restrict out, int ifactor) {
   switch (ifactor) {
-    case 2: trans2D(out_buffer); break;
-    case 3: trans3D(out_buffer); break;
+    case 1: memcpy(out, in, N); break;
+    case 2: trans2D(in, out); break;
+    case 3: trans3D(in, out); break;
   }
 }
 static void write_header(FILE * des, int ifactor) {
@@ -266,29 +252,29 @@ static block_hdr parse_block_header(u8 b[8], bool force) {
 }
 static void encode4(FILE * in, FILE * out, int ifactor) {
   notty(out);
-  u8 * in_buffer, * out_buffer;
+  u8 * in_buffer, * o1, * o2;
   int ibs = compute_interlacing_bs(ifactor);
-  in_buffer = xmalloc(ibs * K), out_buffer = xmalloc(ibs * N);
+  in_buffer = xmalloc(ibs * K), o1 = xmalloc(ibs * N), o2 = xmalloc(ibs * N);
   block_hdr bhdr;  write_header(out, ifactor);
   for (size_t n; n = xfread(in_buffer, ibs * K, in); ) {
     if(n < ibs * K) memset(in_buffer + n, 0, ibs * K - n);
   #if defined(XPAR_OPENMP)
     #pragma omp parallel for if(ifactor == 3)
   #endif
-    Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
-    do_interlacing(out_buffer, ifactor);
-    xfwrite(out_buffer, ibs * N, out);
+    Fi(ibs, rse32(in_buffer + i * K, o1 + i * N));
+    do_interlacing(o1, o2, ifactor);
+    xfwrite(o2, ibs * N, out);
     bhdr.bytes = n; bhdr.crc = crc32c(in_buffer, n);
     write_block_header(out, bhdr);
   }
-  free(in_buffer), free(out_buffer); xfclose(out);
+  free(in_buffer), free(o1), free(o2); xfclose(out);
 }
 #ifdef XPAR_ALLOW_MAPPING
 static void encode3(mmap_t in, FILE * out, int ifactor) {
   notty(out);
-  u8 * in_buffer, * out_buffer;
+  u8 * in_buffer, * o1, * o2;
   int ibs = compute_interlacing_bs(ifactor);
-  in_buffer = xmalloc(ibs * K), out_buffer = xmalloc(ibs * N);
+  in_buffer = xmalloc(ibs * K), o1 = xmalloc(ibs * N), o2 = xmalloc(ibs * N);
   block_hdr bhdr;  write_header(out, ifactor);
   for (sz n;
        n = MIN(in.size, ibs * K), memcpy(in_buffer, in.map, n), n;
@@ -297,30 +283,30 @@ static void encode3(mmap_t in, FILE * out, int ifactor) {
   #if defined(XPAR_OPENMP)
     #pragma omp parallel for if(ifactor == 3)
   #endif
-    Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
-    do_interlacing(out_buffer, ifactor);
-    xfwrite(out_buffer, ibs * N, out);
+    Fi(ibs, rse32(in_buffer + i * K, o1 + i * N));
+    do_interlacing(o1, o2, ifactor);
+    xfwrite(o2, ibs * N, out);
     bhdr.bytes = n; bhdr.crc = crc32c(in_buffer, n);
     write_block_header(out, bhdr);
   }
-  free(in_buffer), free(out_buffer); xfclose(out);
+  free(in_buffer), free(o1), free(o2); xfclose(out);
 }
 #endif
 static void decode4(FILE * in, FILE * out, int force, int ifactor_override,
              bool quiet, bool verbose) {
   notty(in);
-  u8 * in_buffer, * out_buffer;  int laces = 0, ecc = 0;
+  u8 * in1, * in2, * out_buffer;  int laces = 0, ecc = 0;
   block_hdr bhdr; u8 tmp[8];
   int ifactor = read_header(in, force, ifactor_override);
   sz ibs = compute_interlacing_bs(ifactor);
-  in_buffer = xmalloc(ibs * N), out_buffer = xmalloc(ibs * K);
-  for (sz n; n = xfread(in_buffer, ibs * N, in); laces++) {
+  in1 = xmalloc(ibs * N), in2 = xmalloc(ibs * N), out_buffer = xmalloc(ibs * K);
+  for (sz n; n = xfread(in1, ibs * N, in); laces++) {
     if(n < ibs * N) {
       if (!quiet)
         fprintf(stderr, "Short read, lace %u (bytes %zu-%zu).\n",
           laces, laces * ibs * N, laces * ibs * N + n - 1);
       if (!force) exit(1);
-      memset(in_buffer + n, 0, ibs * N - n);
+      memset(in1 + n, 0, ibs * N - n);
     }
     if(xfread(tmp, 8, in) != 8) {
       if (!quiet)
@@ -330,12 +316,12 @@ static void decode4(FILE * in, FILE * out, int force, int ifactor_override,
       if (!force) exit(1);
     }
     bhdr = parse_block_header(tmp, force);
-    do_interlacing(in_buffer, ifactor);
+    do_interlacing(in1, in2, ifactor);
   #if defined(XPAR_OPENMP)
     #pragma omp parallel for if(ifactor == 3)
   #endif
     Fi(ibs,
-      int n = rsd32(in_buffer + i * N);
+      int n = rsd32(in2 + i * N);
       if (n < 0) {
         // POSIX requires single I/O function calls to be thread-safe.
         {
@@ -347,7 +333,7 @@ static void decode4(FILE * in, FILE * out, int force, int ifactor_override,
         if (!force) exit(1);
         }
       } else ecc += n;
-      memcpy(out_buffer + i * K, in_buffer + i * N, K);
+      memcpy(out_buffer + i * K, in2 + i * N, K);
     )
     sz size = MIN(ibs * K, bhdr.bytes);
     u32 crc = crc32c(out_buffer, size);
@@ -359,21 +345,21 @@ static void decode4(FILE * in, FILE * out, int force, int ifactor_override,
     }
     xfwrite(out_buffer, size, out);
   }
-  free(in_buffer), free(out_buffer); xfclose(out);
+  free(in1), free(in2), free(out_buffer); xfclose(out);
   if (!quiet && verbose)
     fprintf(stderr, "Decoded %u laces, %u errors corrected.\n", laces, ecc);
 }
 #ifdef XPAR_ALLOW_MAPPING
 static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
              bool quiet, bool verbose) {
-  u8 * in_buffer, * out_buffer;  int laces = 0, ecc = 0;
+  u8 * in1, * in2, * out_buffer;  int laces = 0, ecc = 0;
   block_hdr bhdr; u8 tmp[8];
   int ifactor = read_header_from_map(in, force, ifactor_override);
   in.size -= 5 + N - K; in.map += 5 + N - K; // Skip the header.
   sz ibs = compute_interlacing_bs(ifactor);
-  in_buffer = xmalloc(ibs * N), out_buffer = xmalloc(ibs * K);
+  in1 = xmalloc(ibs * N), in2 = xmalloc(ibs * N), out_buffer = xmalloc(ibs * K);
   for (sz n;
-      n = MIN(in.size, ibs * N), memcpy(in_buffer, in.map, n),
+      n = MIN(in.size, ibs * N), memcpy(in1, in.map, n),
           in.size -= n, in.map += n, n
       ; laces++) {
     if(n < ibs * N) {
@@ -381,7 +367,7 @@ static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
         fprintf(stderr, "Short read, lace %u (bytes %zu-%zu).\n",
           laces, laces * ibs * N, laces * ibs * N + n - 1);
       if (!force) exit(1);
-      memset(in_buffer + n, 0, ibs * N - n);
+      memset(in1 + n, 0, ibs * N - n);
     }
     if (in.size < 8) {
       if (!quiet)
@@ -394,12 +380,12 @@ static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
       memcpy(tmp, in.map, 8); in.size -= 8; in.map += 8;
     }
     bhdr = parse_block_header(tmp, force);
-    do_interlacing(in_buffer, ifactor);
+    do_interlacing(in1, in2, ifactor);
   #if defined(XPAR_OPENMP)
     #pragma omp parallel for if(ifactor == 3)
   #endif
     Fi(ibs,
-      int n = rsd32(in_buffer + i * N);
+      int n = rsd32(in2 + i * N);
       if (n < 0) {
         {
         const unsigned lace_ibs = laces * ibs + i;
@@ -410,7 +396,7 @@ static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
         if (!force) exit(1);
         }
       } else ecc += n;
-      memcpy(out_buffer + i * K, in_buffer + i * N, K);
+      memcpy(out_buffer + i * K, in2 + i * N, K);
     )
     sz size = MIN(ibs * K, bhdr.bytes);
     u32 crc = crc32c(out_buffer, size);
@@ -422,7 +408,7 @@ static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
     }
     xfwrite(out_buffer, size, out);
   }
-  free(in_buffer), free(out_buffer); xfclose(out);
+  free(in1), free(in2), free(out_buffer); xfclose(out);
   if (!quiet && verbose)
     fprintf(stderr, "Decoded %u laces, %u errors corrected.\n", laces, ecc);
 }

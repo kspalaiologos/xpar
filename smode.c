@@ -22,6 +22,10 @@
 #include <assert.h>
 #include <sys/stat.h>
 
+#if defined(XPAR_OPENMP)
+  #include <omp.h>
+#endif
+
 static u8 LOG[256], EXP[256], PROD[256][256];
 void smode_gf256_gentab(u8 poly) {
   for (int l = 0, b = 1; l < 255; l++) {
@@ -138,7 +142,7 @@ typedef struct {
   gf256mat * matrix;
   uint8_t ** rows;
 } rs;
-rs * rs_init(int data_shards, int parity_shards) {
+static rs * rs_init(int data_shards, int parity_shards) {
   rs * r = malloc(sizeof(rs));
   r->data = data_shards; r->parity = parity_shards;
   r->total = data_shards + parity_shards;
@@ -157,26 +161,17 @@ static void gf256_prod(uint8_t * restrict dst, uint8_t a,
   for (int i = 0; i < len; i++)
     dst[i] ^= PROD[a][b[i]];
 }
-void rs_encode(rs * r, uint8_t ** in, size_t len) {
+static void rs_encode(rs * r, uint8_t ** in, size_t len) {
   for (int j = 0; j < r->parity; j++)
     memset(in[r->data + j], 0, len);
+#if defined(XPAR_OPENMP)
+  #pragma omp parallel for if((r->data + r->parity) > 8 && len > 100 * 1024 * 1024)
+#endif
   for (int j = 0; j < r->parity; j++)
     for (int k = 0; k < r->data; k++)
       gf256_prod(in[r->data + j], r->rows[j][k], in[k], len);
 }
-bool rs_check(rs * r, uint8_t ** in, size_t len) {
-  uint8_t * vec = malloc(len);
-  for (int j = 0; j < r->parity; j++) {
-    memset(vec, 0, len);
-    for (int k = 0; k < r->data; k++)
-      gf256_prod(vec, r->rows[j][k], in[k], len);
-    if(memcmp(vec, in[r->data + j], len)) {
-      free(vec);  return false;
-    }
-  }
-  return true;
-}
-bool rs_correct(rs * r, uint8_t ** in, uint8_t * shards_present, size_t len) {
+static bool rs_correct(rs * r, uint8_t ** in, uint8_t * shards_present, size_t len) {
   int present = 0;
   for (int i = 0; i < r->total; i++)
     if (shards_present[i]) present++;
@@ -194,8 +189,12 @@ bool rs_correct(rs * r, uint8_t ** in, uint8_t * shards_present, size_t len) {
   gf256mat_free(mat);
   if (!inv) return false;
   gf256mat_trans(inv);
-  for (int j = 0; j < r->data; j++)
-    for (int i = 0; i < r->data; i++)
+
+#if defined(XPAR_OPENMP)
+  #pragma omp parallel for if((r->data + r->parity) > 8 && len > 100 * 1024 * 1024)
+#endif
+  for (int i = 0; i < r->data; i++)
+    for (int j = 0; j < r->data; j++)
       if(!shards_present[i]) gf256_prod(in[i], inv->v[j][i], shards[j], len);
   gf256mat_free(inv);  free(shards);
   return true;
