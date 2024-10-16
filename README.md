@@ -37,8 +37,7 @@ A rough outline of some development-related topics below.
 
 ## Roadmap
 
-- Need to implement the parallel variant.
-- Speed up 3D interlacing.
+- Speed up the sharded variant via parallelism or BLAS.
 - Should probably not pad to the full interlacing block size.
 
 ## Repository management
