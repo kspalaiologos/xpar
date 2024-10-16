@@ -260,6 +260,7 @@ crc32c_32k_x86_64_sse42:
 ;  and make room for the new data by ANDing with the mask below.
 ;  A version that works on all x86_64 machines.
 ; =============================================================================
+align 16
 rse32_wipe_mask:
   db 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
   db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -335,6 +336,7 @@ rse32_x86_64_generic:
 ;  blends and permutes (and hence was marginally faster), but I found a better
 ;  way.
 ; =============================================================================
+align 16
 rse32_shuf_mask:
   db 1, 0, 2, 4, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0
