@@ -28,7 +28,8 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ clang, gcc ]
-        feature: [ enable-x86_64, disable-x86_64 ]
+        feature1: [ enable-x86_64, disable-x86_64 ]
+        feature2: [ enable-openmp, disable-openmp ]
     runs-on: ubuntu-latest
     steps:
     - uses: ilammy/setup-nasm@v1
@@ -36,10 +37,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: xpar-${{ github.sha }}
+    - name: Install OpenMP
+      run: sudo apt-get install -y libomp-dev
     - name: Extract source package
       run: tar --strip-components=1 -xf xpar-${{ github.sha }}.tar.gz
     - name: Configure
-      run: ./configure CC=${{ matrix.compiler }} --${{ matrix.feature }}
+      run: ./configure CC=${{ matrix.compiler }} --${{ matrix.feature1 }} --${{ matrix.feature2 }}
     - name: Make
       run: make all self-check
   
