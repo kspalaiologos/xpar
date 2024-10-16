@@ -19,6 +19,10 @@
 #include "crc32c.h"
 #include "platform.h"
 
+#if defined(XPAR_OPENMP)
+  #include <omp.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -192,6 +196,9 @@ static void trans2D(u8 * mat) {
     mat[j * N + i] = temp))
 }
 static void trans3D(u8 * mat) {
+#if defined(XPAR_OPENMP)
+  #pragma omp parallel for
+#endif
   Fi(N, Fj(N, Fk0(N, i + 1,
     int index1 = i * N * N + j * N + k;
     int index2 = k * N * N + j * N + i;
@@ -265,6 +272,9 @@ static void encode4(FILE * in, FILE * out, int ifactor) {
   block_hdr bhdr;  write_header(out, ifactor);
   for (size_t n; n = xfread(in_buffer, ibs * K, in); ) {
     if(n < ibs * K) memset(in_buffer + n, 0, ibs * K - n);
+  #if defined(XPAR_OPENMP)
+    #pragma omp parallel for
+  #endif
     Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
     do_interlacing(out_buffer, ifactor);
     xfwrite(out_buffer, ibs * N, out);
@@ -284,6 +294,9 @@ static void encode3(mmap_t in, FILE * out, int ifactor) {
        n = MIN(in.size, ibs * K), memcpy(in_buffer, in.map, n), n;
        in.size -= n, in.map += n) {
     if(n < ibs * K) memset(in_buffer + n, 0, ibs * K - n);
+  #if defined(XPAR_OPENMP)
+    #pragma omp parallel for
+  #endif
     Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
     do_interlacing(out_buffer, ifactor);
     xfwrite(out_buffer, ibs * N, out);

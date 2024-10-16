@@ -38,6 +38,7 @@ A rough outline of some development-related topics below.
 ## Roadmap
 
 - Need to implement the parallel variant.
+- Speed up 3D interlacing.
 - Should probably not pad to the full interlacing block size.
 
 ## Repository management

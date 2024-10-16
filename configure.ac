@@ -25,6 +25,23 @@ AC_DEFINE([XPAR_MAJOR], [xpar_version_major], [Major version number of xpar])
 AX_C_RESTRICT
 AC_CHECK_SIZEOF([size_t])
 
+AC_OPENMP
+has_openmp=false
+if test -n "$OPENMP_CFLAGS"; then
+  has_openmp=true
+fi
+if test -n "$OPENMP_LDFLAGS"; then
+  has_openmp=true
+fi
+if test "$has_openmp" = "true"; then
+  AC_DEFINE([XPAR_OPENMP], [1], [Enable OpenMP parallelisation.])
+  AM_CONDITIONAL([XPAR_OPENMP], [true])
+  AX_APPEND_COMPILE_FLAGS([$OPENMP_CFLAGS])
+  AX_APPEND_LINK_FLAGS([$OPENMP_LDFLAGS])
+else
+  AM_CONDITIONAL([XPAR_OPENMP], [false])
+fi
+
 AC_ARG_ENABLE([x86_64], [AS_HELP_STRING([--enable-x86_64], [Enable x86_64 platform specific code.])], [enable_x86_64=$enableval], [enable_x86_64=no])
 if test "x$enable_x86_64" = "xyes"; then
   AC_DEFINE([XPAR_X86_64], [1], [Enable x86_64 platform specific code.])
