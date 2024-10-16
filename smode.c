@@ -152,7 +152,8 @@ rs * rs_init(int data_shards, int parity_shards) {
   Fi(parity_shards, r->rows[i] = r->matrix->v[data_shards + i])
   return r;
 }
-static void gf256_prod(uint8_t * dst, uint8_t a, uint8_t * b, size_t len) {
+static void gf256_prod(uint8_t * restrict dst, uint8_t a,
+                       uint8_t * restrict b, size_t len) {
   for (int i = 0; i < len; i++)
     dst[i] ^= PROD[a][b[i]];
 }
