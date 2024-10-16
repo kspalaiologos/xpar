@@ -31,6 +31,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#if defined(XPAR_OPENMP)
+#include <omp.h>
+#endif
+
 // ============================================================================
 //  Command-line stub.
 // ============================================================================
@@ -69,6 +73,9 @@ static void help() {
 #if defined(XPAR_ALLOW_MAPPING)
     "        --no-mmap      unconditionally disable memory mapping\n"
 #endif
+#if defined(XPAR_OPENMP)
+    "  -j #, --jobs=#       set the number of threads to use\n"
+#endif
     "Joint mode only:\n"
     "  -c,   --stdout       force writing to standard output\n"
     "  -i #, --interlace=#  change the interlacing setting (1,2,3)\n"
@@ -100,6 +107,9 @@ int main(int argc, char * argv[]) {
     { "verbose", no_argument, NULL, 'v' },
     { "joint", no_argument, NULL, 'J' },
     { "sharded", no_argument, NULL, 'S' },
+#if defined(XPAR_OPENMP)
+    { "jobs", required_argument, NULL, 'j' },
+#endif
     { "stdout", no_argument, NULL, 'c' },
     { "quiet", no_argument, NULL, 'q' },
     { "help", no_argument, NULL, 'h' },
@@ -117,11 +127,13 @@ int main(int argc, char * argv[]) {
   };
   bool verbose = false, quiet = false, force = false, force_stdout = false;
   bool no_map = false, joint = false, sharded = false;
-  int mode = MODE_NONE, interlacing = -1, dshards = -1, pshards = -1;
+  int mode = MODE_NONE, interlacing = -1, dshards = -1, pshards = -1, jobs = -1;
   const char * out_prefix = NULL;
   for (int c; (c = getopt_long(argc, argv, sopt, lopt, NULL)) != -1; ) {
     switch (c) {
       case 'V': version(); return 0;
+      case 'j':
+        if (jobs != -1) goto conflict;  jobs = atoi(optarg); break;
       case 'J':
         if (sharded) goto conflict;  joint = true; break;
       case 'S':
@@ -161,6 +173,9 @@ int main(int argc, char * argv[]) {
       opmode_conflict: FATAL("Multiple operation modes specified.");
     }
   }
+#if defined(XPAR_OPENMP)
+  if (jobs > 0) omp_set_num_threads(jobs);
+#endif
   if (mode == MODE_NONE)
     FATAL("No operation mode specified.");
   if (!joint && !sharded) joint = true;

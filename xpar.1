@@ -138,6 +138,11 @@ Specify the interlacing factor. Joint mode only.
 Disable memory mapping. Generally results in worse performance, as the fallback
 method is to read the file in chunks using the standard I/O library.
 .TP
+.B \-j --jobs
+Specify the amount of CPU cores to use. Not setting this value or setting it to
+zero will result in the program automatically deciding the amount of cores to
+use. Setting it to one will disable parallel processing.
+.TP
 .B \--out-prefix
 Specify the prefix for the output files (shards). Sharded mode only.
 .TP
