@@ -273,7 +273,7 @@ static void encode4(FILE * in, FILE * out, int ifactor) {
   for (size_t n; n = xfread(in_buffer, ibs * K, in); ) {
     if(n < ibs * K) memset(in_buffer + n, 0, ibs * K - n);
   #if defined(XPAR_OPENMP)
-    #pragma omp parallel for
+    #pragma omp parallel for if(ifactor == 3)
   #endif
     Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
     do_interlacing(out_buffer, ifactor);
@@ -295,7 +295,7 @@ static void encode3(mmap_t in, FILE * out, int ifactor) {
        in.size -= n, in.map += n) {
     if(n < ibs * K) memset(in_buffer + n, 0, ibs * K - n);
   #if defined(XPAR_OPENMP)
-    #pragma omp parallel for
+    #pragma omp parallel for if(ifactor == 3)
   #endif
     Fi(ibs, rse32(in_buffer + i * K, out_buffer + i * N));
     do_interlacing(out_buffer, ifactor);
@@ -331,15 +331,21 @@ static void decode4(FILE * in, FILE * out, int force, int ifactor_override,
     }
     bhdr = parse_block_header(tmp, force);
     do_interlacing(in_buffer, ifactor);
+  #if defined(XPAR_OPENMP)
+    #pragma omp parallel for if(ifactor == 3)
+  #endif
     Fi(ibs,
       int n = rsd32(in_buffer + i * N);
       if (n < 0) {
+        // POSIX requires single I/O function calls to be thread-safe.
+        {
         const unsigned lace_ibs = laces * ibs + i;
         if (!quiet)
           fprintf(stderr,
             "Block %u (lace %u, bytes %u-%u) irrecoverable.\n",
             lace_ibs, laces, lace_ibs * N, lace_ibs * N + N - 1);
         if (!force) exit(1);
+        }
       } else ecc += n;
       memcpy(out_buffer + i * K, in_buffer + i * N, K);
     )
@@ -389,15 +395,20 @@ static void decode3(mmap_t in, FILE * out, int force, int ifactor_override,
     }
     bhdr = parse_block_header(tmp, force);
     do_interlacing(in_buffer, ifactor);
+  #if defined(XPAR_OPENMP)
+    #pragma omp parallel for if(ifactor == 3)
+  #endif
     Fi(ibs,
       int n = rsd32(in_buffer + i * N);
       if (n < 0) {
+        {
         const unsigned lace_ibs = laces * ibs + i;
         if (!quiet)
           fprintf(stderr,
             "Block %u (lace %u, bytes %u-%u) irrecoverable.\n",
             lace_ibs, laces, lace_ibs * N, lace_ibs * N + N - 1);
         if (!force) exit(1);
+        }
       } else ecc += n;
       memcpy(out_buffer + i * K, in_buffer + i * N, K);
     )
