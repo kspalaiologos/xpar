@@ -72,8 +72,8 @@ static gf256mat * gf256mat_eye(int n) {
 static gf256mat * gf256mat_prod(gf256mat * a, gf256mat * b) {
   gf256mat * c = gf256mat_init(a->n, b->m);
   for (int i = 0; i < a->n; i++)
-    for (int j = 0; j < b->m; j++)
-      for (int k = 0; k < a->m; k++)
+    for (int k = 0; k < a->m; k++)
+      for (int j = 0; j < b->m; j++)
         c->v[i][j] ^= PROD[a->v[i][k]][b->v[k][j]];
   return c;
 }

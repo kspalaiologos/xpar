@@ -239,7 +239,7 @@ crc32c_32k_x86_64_sse42:
   crc32 rdi, qword [rbx + 8 * rax]
   crc32 r12, qword [rbx + 8 * rax + (BLK32k - 8) / 3]
   crc32 r15, qword [rbx + 8 * rax + 2 * (BLK32k - 8) / 3]
-  cmp eax, BLK32k / 24
+  cmp eax, BLK32k / 24 - 1
   je .crc32c_32k_combine
   crc32 rdi, qword [rbx + 8 * rax + 8]
   crc32 r12, qword [rbx + 8 * rax + (BLK32k - 8) / 3 + 8]
