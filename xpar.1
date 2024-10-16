@@ -81,7 +81,8 @@ interlacing factor of 3 transposes approx. 16MB blocks of data and can correct
 burst errors of length approx. 1MB. In theory, with the interlacing factor of
 one, up to 32 burst errors could be corrected - this problem is however NP-hard
 and reduces to polynomial reconstruction (the basis of e.g. Shamir's secret
-sharing scheme).
+sharing scheme). As an added benefit, higher interlacing factors tend to result
+in faster processing (up to 50%) as the workload is more parallelisable.
 .PP
 .B xpar
 in sharded encoding mode (
