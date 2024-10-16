@@ -1,4 +1,22 @@
+2024-10-16  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	to-do: strike down some performance-related goals
+
+	avx512 version in xpar-x86_64.asm
+
+	fastest rse32 on the west
+
+	Add update-ChangeLog to the release action.
+
+2024-10-15  mrbenjadmin  <ben.strachan1@gmail.com>
+
+	fix build on linux aarch64 gcc platforms
+
 2024-10-15  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	update the roadmap
+
+	v0.2
 
 	aarch64-machine-specific code
 

@@ -20,7 +20,7 @@ dist_man_MANS = xpar.1
 # Developer convenience targets
 .PHONY: update-ChangeLog
 update-ChangeLog:
-	contrib/gitlog-to-changelog --since=1970-01-01 > ChangeLog
+	contrib/gitlog-to-changelog > ChangeLog
 
 .PHONY: self-check
 self-check:

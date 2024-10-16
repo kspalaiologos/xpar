@@ -2,6 +2,12 @@ This file contains release notes for major and minor releases of xpar.
 For a complete list of source-level changes, consult the ChangeLog file.
 
 ===============================================================================
+v0.3 (16-10-2024)
+- Improve joint encoding performance on x86_64 machines.
+- Support aarch64 Linux.
+- Improve cross-platform compatibility of the sharded mode.
+
+===============================================================================
 v0.2 (15-10-2024)
 - Provides a manual page for the xpar command.
 - Provides platform-specific code for aarch64, which can be enabled via
