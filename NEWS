@@ -2,6 +2,17 @@ This file contains release notes for major and minor releases of xpar.
 For a complete list of source-level changes, consult the ChangeLog file.
 
 ===============================================================================
+v0.5 (17-10-2024)
+- OpenMP support for sharded mode (which unfortunately seems bottlenecked by
+  I/O). 
+- Switch to yarg for command-line parsing, remove dependency on Rich Felker's
+  `getopt_long`.
+- Hopefully the last v0.x release. Hopefully, it will receive some feedback
+  which will help to introduce future improvements and release v1.0. The file
+  format will not change from now on, unless there is a bug or another major
+  misfeature that needs to be fixed.
+
+===============================================================================
 v0.4 (16-10-2024)
 - x86_64 static Linux binaries are no longer provided.
 - OpenMP support has been added to improve encoding and decoding performance

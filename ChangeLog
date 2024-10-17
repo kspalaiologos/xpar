@@ -1,4 +1,19 @@
+2024-10-17  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	ensure that -i3 pads to full block size
+	otherwise we lose the nominal burst error correction capability. if a feature to remove the padding existed, it'd probably be based on shortenings to RS codes (i.e. we know exactly which values must be zero judging just from the block length, so they don't count towards the errors, allowing us to get better parity to data ratio)
+
+	todo: finally got rid of getopt
+
+	getopt_long -> yarg
+
 2024-10-16  Kamila Szewczyk  <kspalaiologos@gmail.com>
+
+	todo: triage tasks
+
+	Sharded mode: OpenMP support.
+
+	v0.4: update NEWS, regenerate changelog
 
 	TODO: update tasks.
 
