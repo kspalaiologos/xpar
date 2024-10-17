@@ -38,7 +38,6 @@ A rough outline of some development-related topics below.
 ## Roadmap
 
 High priority:
-- Replace the getopt_long shim with an in-house implementation.
 - Should probably not pad to the full interlacing block size.
 
 Low priority:
