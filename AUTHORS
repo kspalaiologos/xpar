@@ -6,5 +6,8 @@ Acknowledgements:
 - Phil Karn (KA9Q) originally implemented the error+erasure
   correction codec used by xpar (GPLv2).
 
-Also contains verbatim code written by:
-- Rich Felker (getopt_long shim, Expat/MIT license).
+License: GNU General Public License version 3 or later.
+
+Includes the source code of yarg, a library for parsing command line
+arguments, written by Kamila Szewczyk and licensed under the terms of
+the Creative Commons Zero v1.0 Universal license.

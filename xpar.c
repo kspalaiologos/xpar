@@ -21,6 +21,7 @@
 #include "smode.h"
 #include "platform.h"
 #include "crc32c.h"
+#include "yarg.h"
 
 #include <limits.h>
 #include <assert.h>
@@ -101,39 +102,42 @@ int main(int argc, char * argv[]) {
   platform_init();
   enum { FLAG_NO_MMAP = CHAR_MAX + 1, FLAG_DSHARDS, FLAG_PSHARDS,
          FLAG_OUT_PREFIX };
-  const char * sopt = "VJShvedcfi:";
-  const struct option lopt[] = {
-    { "version", no_argument, NULL, 'V' },
-    { "verbose", no_argument, NULL, 'v' },
-    { "joint", no_argument, NULL, 'J' },
-    { "sharded", no_argument, NULL, 'S' },
+  yarg_options opt[] = {
+    { 'V', no_argument, "version" },
+    { 'v', no_argument, "verbose" },
+    { 'J', no_argument, "joint" },
+    { 'S', no_argument, "sharded" },
 #if defined(XPAR_OPENMP)
-    { "jobs", required_argument, NULL, 'j' },
+    { 'j', required_argument, "jobs" },
 #endif
-    { "stdout", no_argument, NULL, 'c' },
-    { "quiet", no_argument, NULL, 'q' },
-    { "help", no_argument, NULL, 'h' },
-    { "encode", no_argument, NULL, 'e' },
-    { "decode", no_argument, NULL, 'd' },
-    { "force", no_argument, NULL, 'f' },
-    { "dshards", required_argument, NULL, FLAG_DSHARDS },
-    { "pshards", required_argument, NULL, FLAG_PSHARDS },
-    { "out-prefix", required_argument, NULL, FLAG_OUT_PREFIX },
+    { 'c', no_argument, "stdout" },
+    { 'q', no_argument, "quiet" },
+    { 'h', no_argument, "help" },
+    { 'e', no_argument, "encode" },
+    { 'd', no_argument, "decode" },
+    { 'f', no_argument, "force" },
+    { FLAG_DSHARDS, required_argument, "dshards" },
+    { FLAG_PSHARDS, required_argument, "pshards" },
+    { FLAG_OUT_PREFIX, required_argument, "out-prefix" },
 #if defined(XPAR_ALLOW_MAPPING)
-    { "no-mmap", no_argument, NULL, FLAG_NO_MMAP },
+    { FLAG_NO_MMAP, no_argument, "no-mmap" },
 #endif
-    { "interlacing", required_argument, NULL, 'i' },
-    { NULL, 0, NULL, 0 }
+    { 'i', required_argument, "interlacing" },
+    { 0, 0, NULL }
   };
+  yarg_settings settings = { .style = YARG_STYLE_UNIX, .dash_dash = true };
   bool verbose = false, quiet = false, force = false, force_stdout = false;
   bool no_map = false, joint = false, sharded = false;
   int mode = MODE_NONE, interlacing = -1, dshards = -1, pshards = -1, jobs = -1;
   const char * out_prefix = NULL;
-  for (int c; (c = getopt_long(argc, argv, sopt, lopt, NULL)) != -1; ) {
-    switch (c) {
+  yarg_result * res = yarg_parse(argc, argv, opt, settings);
+  if (res->error) { fputs(res->error, stderr); exit(1); }
+  for (int i = 0; i < res->argc; i++) {
+    yarg_option o = res->args[i];
+    switch (o.opt) {
       case 'V': version(); return 0;
       case 'j':
-        if (jobs != -1) goto conflict;  jobs = atoi(optarg); break;
+        if (jobs != -1) goto conflict;  jobs = atoi(o.arg); break;
       case 'J':
         if (sharded) goto conflict;  joint = true; break;
       case 'S':
@@ -153,21 +157,21 @@ int main(int argc, char * argv[]) {
       case 'c': force_stdout = true; break;
       case FLAG_NO_MMAP: no_map = true; break;
       case 'i':
-        interlacing = atoi(optarg);
+        interlacing = atoi(o.arg);
         if (interlacing < 1 || interlacing > 3)
           FATAL("Invalid interlacing factor.");
         break;
       case FLAG_DSHARDS:
-        dshards = atoi(optarg);
+        dshards = atoi(o.arg);
         if (dshards < 1 || dshards >= MAX_DATA_SHARDS)
           FATAL("Invalid number of data shards.");
         break;
       case FLAG_PSHARDS:
-        pshards = atoi(optarg);
+        pshards = atoi(o.arg);
         if (pshards < 1 || pshards >= MAX_PARITY_SHARDS)
           FATAL("Invalid number of parity shards.");
         break;
-      case FLAG_OUT_PREFIX: out_prefix = optarg; break;
+      case FLAG_OUT_PREFIX: out_prefix = o.arg; break;
       default: exit(1); break;
       conflict: FATAL("Conflicting options.");
       opmode_conflict: FATAL("Multiple operation modes specified.");
@@ -184,10 +188,11 @@ int main(int argc, char * argv[]) {
       FATAL("Sharded mode options in joint mode.");
     if (interlacing == -1) interlacing = 1;
     char * f1 = NULL, * f2 = NULL;
-    while (optind < argc) {
-      if (!f1) f1 = argv[optind++];
-      else if (!f2) f2 = argv[optind++];
-      else FATAL("Too many arguments.");
+    switch (res->pos_argc) {
+      case 0: break;
+      case 1: f1 = res->pos_args[0]; break;
+      case 2: f1 = res->pos_args[0], f2 = res->pos_args[1]; break;
+      default: FATAL("Too many positional arguments.");
     }
     char * input_file = NULL, * output_file = NULL;
     if (f1) switch(mode) {
@@ -239,9 +244,9 @@ int main(int argc, char * argv[]) {
       case MODE_ENCODING: {
         if (dshards == -1 || pshards == -1)
           FATAL("Number of data and parity shards not specified.");
-        if (optind >= argc) FATAL("No input file specified.");
-        const char * input_file = argv[optind++];
-        if (optind < argc) FATAL("Too many arguments.");
+        if (res->pos_argc == 0) FATAL("No input file specified.");
+        const char * input_file = res->pos_args[0];
+        if (res->pos_argc > 1) FATAL("Too many positional arguments.");
         if (!out_prefix) out_prefix = input_file;
         sharded_encoding_options_t opt = {
           .input_name = input_file, .output_prefix = out_prefix,
@@ -253,14 +258,14 @@ int main(int argc, char * argv[]) {
         break;
       }
       case MODE_DECODING: {
-        if (optind >= argc) FATAL("No output file specified.");
-        const char * output_file = argv[optind++];
-        if (optind >= argc) FATAL("No input files specified.");
+        if (res->pos_argc == 0) FATAL("No output file specified.");
+        const char * output_file = res->pos_args[0];
+        if (res->pos_argc < 2) FATAL("No input shards specified.");
         sharded_decoding_options_t opt = {
           .output_file = output_file,
-          .input_files = (const char **) argv + optind,
+          .input_files = (const char **) res->pos_args + 1,
           .force = force, .quiet = quiet, .verbose = verbose,
-          .no_map = no_map, .n_input_shards = argc - optind
+          .no_map = no_map, .n_input_shards = res->pos_argc - 1
         };
         sharded_decode(opt);
         break;
@@ -273,4 +278,5 @@ int main(int argc, char * argv[]) {
       printf("Elapsed time: %.6f seconds.\n", elapsed);
     }
   }
+  yarg_destroy(res);
 }
