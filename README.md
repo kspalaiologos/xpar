@@ -37,9 +37,6 @@ A rough outline of some development-related topics below.
 
 ## Roadmap
 
-High priority:
-- Should probably not pad to the full interlacing block size.
-
 Low priority:
 - Speed up trans2D/trans3D in jmode.c (might need native code).
 
