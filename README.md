@@ -35,11 +35,6 @@ compatibility until then.
 
 A rough outline of some development-related topics below.
 
-## Roadmap
-
-Low priority:
-- Speed up trans2D/trans3D in jmode.c (might need native code).
-
 ## Repository management
 
 As it stands:
