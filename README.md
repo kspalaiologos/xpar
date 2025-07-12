@@ -1,7 +1,7 @@
 # xpar
 xpar - an error/erasure code system guarding data integrity.
 Licensed under the terms of GNU GPL version 3 or later - see COPYING.
-Report issues to Kamila Szewczyk <kspalaiologos@gmail.com>.
+Report issues to Kamila Szewczyk <k@iczelia.net>.
 Project homepage: https://github.com/kspalaiologos/xpar
 
 xpar in joint mode generates a slightly inflated (by about 12%) parity-guarded
