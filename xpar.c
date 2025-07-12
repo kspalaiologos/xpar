@@ -93,7 +93,7 @@ static void help() {
     "errors in a 65025 byte block.\n"
     "\n"
     "Report bugs to: https://github.com/kspalaiologos/xpar\n"
-    "Or contact the author: Kamila Szewczyk <kspalaiologos@gmail.com>\n"
+    "Or contact the author: Kamila Szewczyk <k@iczelia.net>\n"
   );
 }
 enum mode_t { MODE_NONE, MODE_ENCODING, MODE_DECODING };
